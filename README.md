@@ -1,220 +1,158 @@
 <p align="center">
-  <img src="nexo_logo.png" alt="Nexo Logo" width="160" />
+  <img src="src/assets/logo.png" alt="Altura Logo" width="160" />
 </p>
 
-<h1 align="center">NEXO</h1>
+<h1 align="center">ALTURA</h1>
 
 <p align="center">
-  <strong>Plataforma Inteligente de Matchmaking entre Startups e Investidores</strong><br>
+  <strong>Plataforma de matchmaking entre Startups e Investidores</strong><br>
   <em>Projeto Integrador 2026.2 • UE: FullStack • Senac</em>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Frontend-Concluído%20(React%2019)-brightgreen?style=for-the-badge&logo=react&logoColor=black" alt="Frontend" />
-  <img src="https://img.shields.io/badge/Backend%20API-Em%20Desenvolvimento-orange?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Backend" />
-  <img src="https://img.shields.io/badge/Banco%20de%20Dados-Em%20Estruturação-yellow?style=for-the-badge" alt="Banco de Dados" />
-  <img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/Vite-6.x-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite" />
-  <img src="https://img.shields.io/badge/LGPD-Planejada-blue?style=for-the-badge" alt="LGPD" />
-  <a href="https://trello.com/b/H6sAjFhC/pi-nexo" target="_blank">
-    <img src="https://img.shields.io/badge/Trello-PI_Nexo-0052CC?style=for-the-badge&logo=trello&logoColor=white" alt="Quadro do Trello" />
-  </a>
+  <img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React 19" />
+  <img src="https://img.shields.io/badge/TypeScript-5.7-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Vite-6-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite" />
+  <img src="https://img.shields.io/badge/Spring%20Boot-3-6DB33F?style=for-the-badge&logo=springboot&logoColor=white" alt="Spring Boot" />
+  <img src="https://img.shields.io/badge/Tailwind-4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind" />
 </p>
-</p>
-
----
-
-## 📌 Sumário
-
-- [Visão Geral](#-visão-geral)
-- [Proposta de Valor e Público-Alvo](#-proposta-de-valor-e-público-alvo)
-- [Status de Desenvolvimento do MVP](#-status-de-desenvolvimento-do-mvp)
-- [Fluxo Principal da Solução](#-fluxo-principal-da-solução)
-- [Arquitetura e Tecnologias](#-arquitetura-e-tecnologias)
-- [Business Model Canvas Inicial](#-business-model-canvas-inicial)
-- [Governança e Conformidade LGPD](#-governança-e-conformidade-lgpd)
-- [Estrutura Atual do Repositório](#-estrutura-atual-do-repositório)
-- [Como Executar o Projeto](#-como-executar-o-projeto)
-- [Equipe](#-equipe)
 
 ---
 
 ## 💡 Visão Geral
 
-O **NEXO** é uma plataforma web responsiva e PWA projetada para conectar e aproximar **startups em busca de captação e crescimento** a **investidores com teses alinhadas**.
+A **ALTURA** conecta **startups com tração em busca de captação** a **investidores com teses alinhadas**. Com perfis estruturados, métricas mensais (receita, MRR, clientes, crescimento), filtros avançados e um catálogo de rodadas abertas, a plataforma reduz o tempo de busca no ecossistema de inovação.
 
-Por meio de perfis estruturados, filtros detalhados e mecanismos de correspondência inteligente (*matchmaking*), a plataforma reduz o atrito e o tempo de busca no ecossistema de inovação, proporcionando conexões assertivas e qualificadas.
+- **Startups:** visibilidade qualificada e apresentação padronizada de tração.
+- **Investidores:** *dealflow* curado, focado em startups com tração comprovada.
 
----
-
-## 🎯 Proposta de Valor e Público-Alvo
-
-### Proposta de Valor
-* **Para Startups:** Visibilidade qualificada para investidores-anjo e fundos, apresentação padronizada de métricas e redução do tempo de captação.
-* **Para Investidores:** Curadoria e filtragem de dealflow com base em critérios de tese, estágio de maturidade, segmento e ticket médio.
-
-### Público-Alvo
-1. **Startups & Empreendedores:** Negócios em fases de validação, MVP, tração ou escala em busca de investimento inteligente (*smart money*).
-2. **Investidores & Fundos:** Investidores-anjo, sindicatos de investimento, aceleradoras e fundos de *Venture Capital (VC)*.
+O frontend é uma SPA em **React 19 + TypeScript**; o **Spring Boot 3** cuida de autenticação, validações e API, com **PostgreSQL (Neon)**.
 
 ---
 
-## 🚀 Status de Desenvolvimento do MVP (1ª Entrega)
+## ✅ Funcionalidades
 
-| Módulo / Requisito | Status Atual | Detalhes |
-| :--- | :---: | :--- |
-| **Interface Web Responsiva / PWA** | `Concluído` | Interface moderna em React 19 + TypeScript rodando com Vite |
-| **Autenticação & Perfis (Startup / Investidor)** | `Concluído (UI)` | Telas e alternância de papéis implementadas no frontend |
-| **Catálogo de Startups & Investidores** | `Concluído (UI)` | Visualização de cards, métricas e teses com dados simulados |
-| **Mecanismo de Filtros & Oportunidades** | `Concluído (UI)` | Filtros dinâmicos por segmento, ticket e estágio no frontend |
-| **Fluxo de Matchmaking & Interesse** | `Concluído (UI)` | Simulação visual de registro de interesse e status de match |
-| **Dashboard de Oportunidades** | `Concluído (UI)` | Painéis e métricas renderizados no cliente |
-| **Backend REST API (Node.js)** | `Em Desenvolvimento` | Estruturação dos serviços e endpoints REST |
-| **Banco de Dados Integrado** | `Em Desenvolvimento` | Modelagem e integração do banco de dados persistente |
+- **Landing page:** hero, como funciona, trilhas por público, segmentos, FAQ e CTA.
+- **Autenticação:** cadastro/login por e-mail e senha com papel (Startup ou Investidor), BCrypt, JWT curto e refresh token rotativo.
+- **Onboarding:** formulário por papel validado com Zod (CNPJ/CPF, segmentos, rodada, tração ou ticket), com rascunho automático em `localStorage`.
+- **Dashboard e perfil:** visão geral por papel, edição de perfil e prévia de como o perfil aparece para o outro lado.
+- **Exclusão de perfil:** diálogo com confirmação em duas etapas; remove o perfil (a conta de acesso permanece) e redireciona ao onboarding.
+- **Explorar rodadas (investidor):** listagem com filtros (nome, segmento, ticket, equity mínimo), cards de oportunidade e modal com detalhes e vídeo de pitch.
+- **Feed de tração:** publicações com categorias, métrica em destaque, imagem ou vídeo do YouTube, curtidas e comentários.
 
----
+### Imagens do feed
 
-## 🔄 Fluxo Principal da Solução
+As imagens ficam em um bucket privado do **Neon Object Storage** (o banco guarda só a chave) e são servidas por URL assinada temporária. Antes do upload, o navegador reduz a imagem para no máximo 1600 px e converte para WebP (meta ~500 KB, limite 1 MB). O backend revalida MIME, assinatura binária e tamanho.
 
-O fluxo da plataforma contempla toda a jornada do usuário, desde a entrada até a conexão mútua:
+Variáveis necessárias em `backend/.env` (nunca no frontend):
 
-```mermaid
-flowchart LR
-    A["Cadastro / Login"] --> B{"Tipo de Perfil"}
-    B -->|Startup| C["Perfil da Startup & Investimento"]
-    B -->|Investidor| D["Tese & Faixa de Aporte"]
-    C --> E["Busca & Descoberta"]
-    D --> E
-    E --> F["Filtros & Recomendação"]
-    F --> G["Identificação de Oportunidades"]
-    G --> H["Manifestação de Interesse"]
-    H --> I{"Match Confirmado?"}
-    I -->|Sim| J["Dashboard de Conexões & Contato"]
-    I -->|Pendente| K["Acompanhamento no Dashboard"]
+```dotenv
+AWS_ENDPOINT_URL_S3=https://SEU-ENDPOINT-DE-STORAGE
+AWS_REGION=us-east-2
+AWS_ACCESS_KEY_ID=...
+AWS_SECRET_ACCESS_KEY=...
+STORAGE_BUCKET=altura-feed
+STORAGE_SIGNED_URL_MINUTES=60
 ```
 
+Sem elas, a API funciona para texto e YouTube, mas recusa o envio de imagens.
+
 ---
 
-## 🛠 Arquitetura e Tecnologias
-
-A arquitetura do projeto foi desenhada seguindo o modelo **cliente-servidor desacoplado**:
+## 🔄 Fluxo Principal
 
 ```mermaid
 flowchart TD
-    Client["Frontend SPA / PWA (React 19 + TypeScript + Vite)"]
-    API["Backend REST API (Node.js - Em Desenvolvimento)"]
-    DB[("Banco de Dados Integrado (Em Desenvolvimento)")]
-    IA["Módulo de Matchmaking / Filtros Inteligentes"]
-
-    Client <-->|"HTTP / REST"| API
-    API <-->|"Persistência / Queries"| DB
-    API <-->|"Processamento de Score"| IA
-```
-
-### Stack Tecnológica
-* **Frontend:** [React 19](https://react.dev/), [TypeScript](https://www.typescriptlang.org/), [Vite](https://vite.dev/), PWA e CSS moderno.
-* **Backend (em construção):** [Node.js](https://nodejs.org/), API RESTful com arquitetura desacoplada.
-* **Linter & Qualidade de Código:** [Oxlint](https://oxc-project.github.io/), Git e GitHub.
-
----
-
-## 📊 Business Model Canvas Inicial
-
-```
-┌────────────────────────┬────────────────────────┬────────────────────────┬────────────────────────┬────────────────────────┐
-│ PARCERIAS-CHAVE        │ ATIVIDADES-CHAVE       │ PROPOSTA DE VALOR      │ RELACIONAMENTO         │ SEGMENTOS DE CLIENTES  │
-│ • Aceleradoras e Hubs  │ • Desenvolvimento contínuo│ • Matchmaking ágil e │ • Suporte na plataforma│ • Startups (Early/     │
-│   de Inovação          │   do algoritmo de match│   assertivo baseado em │ • Transparência de     │   Growth Stage)        │
-│ • Faculdades e Polos   │ • Moderação de perfis e│   dados estruturados   │   métricas e feedbacks │ • Investidores-anjo,   │
-│ • Associações de Anjos │   curadoria de dados   │ • Redução de ruído na  │                        │   Family Offices e     │
-│                        │ • Segurança e LGPD     │   busca por capital    │ CANAIS                 │   Fundos de VC         │
-├────────────────────────┼────────────────────────┤                        ├────────────────────────┤                        │
-│ RECURSOS-CHAVE         │                        │                        │ • Plataforma Web e PWA │                        │
-│ • Plataforma Tecnológica                        │                        │ • Parcerias com Polos  │                        │
-│ • Base de dados de startups e investidores     │                        │   Tecnológicos         │                        │
-├────────────────────────┴────────────────────────┴────────────────────────┴────────────────────────┴────────────────────────┤
-│ ESTRUTURA DE CUSTOS                                                      │ FONTES DE RECEITA                                      │
-│ • Infraestrutura de nuvem, servidores e banco de dados                   │ • Modelo Freemium com planos Premium para destaque     │
-│ • Desenvolvimento, manutenção e segurança da informação                 │ • Taxa de sucesso / Conexões avançadas de dealflow     │
-└──────────────────────────────────────────────────────────────────────────┴────────────────────────────────────────────────────────┘
+    A["Cadastro / Login"] --> B{"Tipo de perfil"}
+    B -->|Startup| C["Onboarding: perfil + rodada"]
+    B -->|Investidor| D["Onboarding: tese e ticket"]
+    C --> E["Dashboard (/app)"]
+    D --> E
+    E -->|Investidor| F["Explorar rodadas"]
+    E -->|Ambos| G["Editar perfil / Feed"]
 ```
 
 ---
 
-## ⚖ Governança e Conformidade LGPD
+## 🧭 Rotas
 
-O projeto adota princípios de privacidade desde a concepção (*Privacy by Design*), de acordo com a **Lei Geral de Proteção de Dados (Lei nº 13.709/2018)**:
+| Rota | Página | Acesso |
+| :--- | :--- | :--- |
+| `/` | Landing page | Público |
+| `/login` | Login | Público |
+| `/cadastro`, `/cadastro/startup`, `/cadastro/investidor` | Cadastro | Público |
+| `/onboarding` | Onboarding de perfil | Autenticado (sem perfil) |
+| `/app` | Dashboard | Autenticado |
+| `/editar-perfil` | Editar perfil | Autenticado |
+| `/explorar-rodadas` | Explorar rodadas | Investidor |
+| `/feed` | Feed de tração | Autenticado |
 
-### 1. Dados Pessoais Tratados
-* **Identificação e Contato:** Nome, e-mail, telefone, cargo e vínculo institucional.
-* **Dados do Negócio:** Estágio, tese, faixas financeiras declaradas e métricas corporativas (sob consentimento e controle de visibilidade do usuário).
-
-### 2. Segurança e Direitos
-* **Finalidade e Minimização:** Coleta estrita dos dados necessários para a operação do matchmaking.
-* **Segurança da Informação:** Proteção de senhas com *hash*, comunicação cifrada via HTTPS e controle restrito de acesso.
-* **Direitos do Titular:** Garantia de visualização, retificação e solicitação de exclusão dos dados cadastrais.
+Estados de autenticação: `loading` → `signedOut` → `needsProfile` → `ready`.
 
 ---
 
-## 📂 Estrutura Atual do Repositório
+## 🛠 Stack
+
+- **Frontend:** React 19, TypeScript, Vite 6, Tailwind CSS 4, Zod 4, lucide-react.
+- **Backend:** Java 17, Spring Boot 3, Spring Security, Spring JDBC, JWT, BCrypt.
+- **Banco:** PostgreSQL no Neon (acesso só pelo backend, via TLS).
+- **Schema:** `database/nexo_schema.sql`. Para notificações em banco existente, execute `database/20261016_notifications.sql` no Neon antes de reiniciar a API.
+
+---
+
+## 📂 Estrutura
 
 ```text
-nexo/
-├── app/                    # Frontend da aplicação (React + Vite + TypeScript)
-│   ├── public/             # Arquivos públicos e assets estáticos
-│   ├── src/                # Código-fonte da interface
-│   │   ├── assets/         # Imagens e recursos visuais
-│   │   ├── App.css         # Estilos da aplicação
-│   │   ├── App.tsx         # Componente principal com as telas do MVP
-│   │   ├── index.css       # Estilos globais
-│   │   └── main.tsx        # Ponto de entrada do React
-│   ├── package.json        # Dependências e scripts do frontend
-│   └── vite.config.ts      # Configuração do Vite
-├── nexo_logo.png           # Logotipo oficial da plataforma
-└── README.md               # Documentação do projeto
+altura/
+├── backend/     # API Spring Boot e repositórios JDBC
+├── database/    # Schema e migrations PostgreSQL
+├── docs/        # openapi.yaml
+├── public/      # Assets estáticos
+└── src/
+    ├── auth/        # Contexto e API de autenticação
+    ├── components/  # Páginas e componentes de UI
+    ├── data/        # Dados e tipos
+    ├── lib/         # Cliente HTTP e contratos da API
+    ├── utils/       # Documentos, localização, vídeos, imagens
+    └── App.tsx      # Roteamento (History API)
 ```
 
 ---
 
-## 💻 Como Executar o Projeto
+## 📖 API
 
-### Pré-requisitos
-* [Node.js](https://nodejs.org/) (versão 20.x ou superior recomendada)
-* Gerenciador de pacotes `npm` ou `yarn`
+Com o backend rodando: Swagger UI em `http://localhost:8080/swagger-ui.html` e OpenAPI JSON em `http://localhost:8080/v3/api-docs`.
 
-### Passo a Passo
+---
+
+## ⚖ LGPD
+
+O projeto segue *Privacy by Design* (Lei nº 13.709/2018): coleta mínima de dados, controle de acesso pelo `sub` do JWT, senhas em BCrypt, refresh tokens em SHA-256 e direitos do titular via edição e exclusão de perfil.
+
+---
+
+## 💻 Como Executar
+
+Pré-requisitos: Node.js 20+, npm, Java 17 e Maven 3.9+.
+
 ```bash
-# 1. Clonar o repositório
-git clone https://github.com/Pedro-Maciel77/nexo.git
-cd nexo
-
-# 2. Acessar a pasta do frontend
-cd app
-
-# 3. Instalar as dependências
+git clone https://github.com/kiellzz/altura.git
+cd altura_p.i_2026.2
 npm install
 
-# 4. Iniciar o servidor de desenvolvimento
-npm run dev
+# Frontend: crie .env com VITE_API_URL=http://localhost:8080/api
+# Backend: configure backend/.env a partir de backend/.env.example
+
+cd backend && mvn spring-boot:run   # terminal 1
+npm run dev                         # terminal 2 (na raiz)
 ```
 
-Acesse no navegador: `http://localhost:5173`.
+Acesse `http://localhost:5173`. Scripts: `npm run dev`, `npm run build` (tsc + build) e `npm run preview`.
 
 ---
 
 ## 👥 Equipe
 
-* **Pedro Henrique Maciel** ([@Pedro-Maciel77](https://github.com/Pedro-Maciel77))
-* **Hugo Dantas**
-* **Roberto Alves**
-* **Cleybson Teixeira**
-* **Ezequiel Borges**
-* **Eduardo Soares**
+Pedro Henrique Maciel • Hugo Dantas • Roberto Alves • Cleybson Teixeira • Ezequiel Borges • Eduardo Soares
 
 *Orientação: Prof. Geraldo Gomes*
-
----
-
-<p align="center">
-  Desenvolvido com 💙 pelo time <strong>NEXO</strong>
-</p>

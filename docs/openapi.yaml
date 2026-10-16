@@ -1,0 +1,324 @@
+openapi: 3.1.0
+info:
+  title: API Altura
+  version: 0.3.0
+  description: API Spring Boot da Altura com autenticação JWT e persistência PostgreSQL.
+servers:
+  - url: http://localhost:8080
+security:
+  - bearerAuth: []
+paths:
+  /api/auth/register:
+    post:
+      security: []
+      summary: Cria uma conta persistente e inicia a sessão
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/RegisterRequest'}
+      responses:
+        '200':
+          description: Conta criada
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AuthTokenResponse'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /api/auth/login:
+    post:
+      security: []
+      summary: Autentica com e-mail e senha
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/LoginRequest'}
+      responses:
+        '200':
+          description: Sessão iniciada
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AuthTokenResponse'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+  /api/auth/refresh:
+    post:
+      security: []
+      summary: Rotaciona o refresh token e emite novo JWT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/RefreshTokenRequest'}
+      responses:
+        '200':
+          description: Sessão renovada
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AuthTokenResponse'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+  /api/auth/logout:
+    post:
+      security: []
+      summary: Revoga o refresh token informado
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/RefreshTokenRequest'}
+      responses:
+        '204': {description: Sessão encerrada}
+  /api/me:
+    get:
+      summary: Retorna o usuário autenticado e o estado do perfil
+      responses:
+        '200':
+          description: Usuário atual
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/MeResponse'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+  /api/segments:
+    get:
+      summary: Lista os segmentos disponíveis
+      responses:
+        '200':
+          description: Segmentos
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/Segment'}
+  /api/me/startup-profile:
+    get:
+      summary: Carrega o perfil da startup autenticada
+      responses:
+        '200': {description: Perfil encontrado}
+        '404': {description: Perfil ainda não cadastrado}
+    put:
+      summary: Cria ou atualiza o perfil da startup autenticada
+      responses:
+        '200': {description: Perfil salvo}
+        '400': {description: Dados inválidos}
+    delete:
+      summary: Exclui o perfil, preservando a conta
+      responses:
+        '204': {description: Perfil excluído}
+  /api/me/investor-profile:
+    get:
+      summary: Carrega o perfil do investidor autenticado
+      responses:
+        '200': {description: Perfil encontrado}
+        '404': {description: Perfil ainda não cadastrado}
+    put:
+      summary: Cria ou atualiza o perfil do investidor autenticado
+      responses:
+        '200': {description: Perfil salvo}
+        '400': {description: Dados inválidos}
+    delete:
+      summary: Exclui o perfil, preservando a conta
+      responses:
+        '204': {description: Perfil excluído}
+  /api/rounds/open:
+    get:
+      summary: Lista rodadas abertas para o investidor autenticado
+      responses:
+        '200': {description: Rodadas abertas}
+        '403': {description: Disponível somente para investidores}
+  /api/feed:
+    get:
+      summary: Lista as publicações mais recentes da rede
+      parameters:
+        - in: query
+          name: limit
+          schema: {type: integer, minimum: 1, maximum: 50, default: 20}
+      responses:
+        '200':
+          description: Feed da rede
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/FeedPost'}
+    post:
+      summary: Cria uma publicação no feed
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreatePostRequest'}
+          multipart/form-data:
+            schema:
+              type: object
+              required: [post, image]
+              properties:
+                post: {$ref: '#/components/schemas/CreatePostRequest'}
+                image: {type: string, format: binary, description: WebP/JPG/PNG com até 1 MB}
+            encoding:
+              post: {contentType: application/json}
+      responses:
+        '201':
+          description: Publicação criada
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FeedPost'}
+        '400': {description: Conteúdo ou métrica inválida}
+  /api/feed/{postId}:
+    delete:
+      summary: Exclui uma publicação do próprio usuário
+      parameters:
+        - $ref: '#/components/parameters/PostId'
+      responses:
+        '204': {description: Publicação excluída}
+        '403': {description: A publicação pertence a outro usuário}
+        '404': {description: Publicação não encontrada}
+  /api/feed/{postId}/like:
+    post:
+      summary: Alterna a curtida do usuário na publicação
+      parameters:
+        - $ref: '#/components/parameters/PostId'
+      responses:
+        '200':
+          description: Novo estado da curtida
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LikeResponse'}
+        '404': {description: Publicação não encontrada}
+  /api/feed/{postId}/comments:
+    post:
+      summary: Adiciona um comentário à publicação
+      parameters:
+        - $ref: '#/components/parameters/PostId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreateCommentRequest'}
+      responses:
+        '201':
+          description: Comentário criado
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FeedComment'}
+        '404': {description: Publicação não encontrada}
+components:
+  parameters:
+    PostId:
+      in: path
+      name: postId
+      required: true
+      schema: {type: integer, format: int64}
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  responses:
+    Unauthorized:
+      description: Credenciais ou sessão inválidas
+    Conflict:
+      description: E-mail já cadastrado
+  schemas:
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: {type: string, format: email, example: startup@exemplo.com}
+        password: {type: string, format: password, example: Senha123}
+    RegisterRequest:
+      type: object
+      required: [email, password, tipo]
+      properties:
+        email: {type: string, format: email}
+        password: {type: string, minLength: 8, maxLength: 72, format: password}
+        tipo: {type: string, enum: [startup, investidor]}
+        nome: {type: string, maxLength: 100}
+    RefreshTokenRequest:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken: {type: string}
+    AuthTokenResponse:
+      type: object
+      required: [accessToken, refreshToken, expiresIn, user]
+      properties:
+        accessToken: {type: string}
+        refreshToken: {type: string}
+        expiresIn: {type: integer, format: int64, example: 900}
+        user: {$ref: '#/components/schemas/AuthUser'}
+    AuthUser:
+      type: object
+      required: [id, email, nome, tipo, ativo]
+      properties:
+        id: {type: string, format: uuid}
+        email: {type: string, format: email}
+        nome: {type: string}
+        tipo: {type: string, enum: [startup, investidor]}
+        ativo: {type: boolean}
+    MeResponse:
+      type: object
+      required: [id, nome, tipo, ativo, perfilCompleto]
+      properties:
+        id: {type: string, format: uuid}
+        nome: {type: string}
+        tipo: {type: string, enum: [startup, investidor]}
+        ativo: {type: boolean}
+        perfilCompleto: {type: boolean}
+    Segment:
+      type: object
+      required: [id, nome]
+      properties:
+        id: {type: integer, format: int64}
+        nome: {type: string}
+    CreatePostRequest:
+      type: object
+      required: [conteudo, categoria]
+      properties:
+        conteudo: {type: string, minLength: 3, maxLength: 1500}
+        categoria: {type: string, enum: [atualizacao, conquista, rodada, insight]}
+        metricaRotulo: {type: string, maxLength: 40}
+        metricaValor: {type: string, maxLength: 80}
+        youtubeVideoId: {type: string, pattern: '^[A-Za-z0-9_-]{11}$'}
+    CreateCommentRequest:
+      type: object
+      required: [conteudo]
+      properties:
+        conteudo: {type: string, minLength: 1, maxLength: 500}
+    LikeResponse:
+      type: object
+      required: [curtido, curtidas]
+      properties:
+        curtido: {type: boolean}
+        curtidas: {type: integer}
+    FeedComment:
+      type: object
+      required: [id, autorId, autorNome, autorTipo, conteudo, criadoEm]
+      properties:
+        id: {type: integer, format: int64}
+        autorId: {type: string, format: uuid}
+        autorNome: {type: string}
+        autorTipo: {type: string, enum: [startup, investidor]}
+        conteudo: {type: string}
+        criadoEm: {type: string, format: date-time}
+    FeedPost:
+      type: object
+      required: [id, autorId, autorNome, autorTipo, conteudo, categoria, criadoEm, curtidas, curtidoPorMim, meuPost, comentarios]
+      properties:
+        id: {type: integer, format: int64}
+        autorId: {type: string, format: uuid}
+        autorNome: {type: string}
+        autorTipo: {type: string, enum: [startup, investidor]}
+        autorDescricao: {type: [string, 'null']}
+        autorImagem: {type: [string, 'null']}
+        conteudo: {type: string}
+        categoria: {type: string, enum: [atualizacao, conquista, rodada, insight]}
+        metricaRotulo: {type: [string, 'null']}
+        metricaValor: {type: [string, 'null']}
+        imagemUrl: {type: [string, 'null'], format: uri, description: URL temporária assinada}
+        youtubeVideoId: {type: [string, 'null'], pattern: '^[A-Za-z0-9_-]{11}$'}
+        criadoEm: {type: string, format: date-time}
+        curtidas: {type: integer}
+        curtidoPorMim: {type: boolean}
+        meuPost: {type: boolean}
+        comentarios:
+          type: array
+          items: {$ref: '#/components/schemas/FeedComment'}
