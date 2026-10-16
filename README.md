@@ -13,7 +13,8 @@
   <img src="https://img.shields.io/badge/Frontend-React%2019-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React 19" />
   <img src="https://img.shields.io/badge/TypeScript-5.7-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript 5.7" />
   <img src="https://img.shields.io/badge/Vite-6.x-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite 6" />
-  <img src="https://img.shields.io/badge/Supabase-Auth%20%2B%20Postgres-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase" />
+  <img src="https://img.shields.io/badge/Backend-Spring%20Boot%203-6DB33F?style=for-the-badge&logo=springboot&logoColor=white" alt="Spring Boot 3" />
+  <img src="https://img.shields.io/badge/Auth-Spring%20Security-6DB33F?style=for-the-badge&logo=springsecurity&logoColor=white" alt="Spring Security" />
   <img src="https://img.shields.io/badge/Tailwind%20CSS-4.x-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind CSS 4" />
   <img src="https://img.shields.io/badge/Zod-4.x-3068B7?style=for-the-badge&logo=zod&logoColor=white" alt="Zod 4" />
   <img src="https://img.shields.io/badge/LGPD-Planejada-blue?style=for-the-badge" alt="LGPD" />
@@ -40,22 +41,22 @@
 
 ## 💡 Visão Geral
 
-A **ALTURA** é uma plataforma web responsiva que conecta **startups em busca de captação** a **investidores com teses alinhadas**.
+A **ALTURA** é uma plataforma web responsiva que conecta **startups em tração em busca de captação** a **investidores com teses alinhadas**.
 
-Por meio de perfis estruturados (segmento, fase, ticket, localização, links e vídeo de pitch), filtros avançados e um catálogo de rodadas abertas, a plataforma reduz o atrito e o tempo de busca no ecossistema de inovação.
+Por meio de perfis estruturados, métricas mensais de tração (receita, MRR, clientes, pilotos e crescimento), filtros avançados e um catálogo qualificado de rodadas abertas, a plataforma reduz o atrito e o tempo de busca no ecossistema de inovação.
 
-O frontend é uma **SPA em React 19 + TypeScript** com roteamento próprio (History API), e a persistência **já está integrada ao Supabase** (autenticação + banco PostgreSQL), substituindo os dados simulados das primeiras entregas.
+O frontend é uma **SPA em React 19 + TypeScript** com roteamento próprio (History API). O **Spring Boot 3** concentra autenticação, autorização, validações e a API, com persistência em **PostgreSQL hospedado no Neon**.
 
 ---
 
 ## 🎯 Proposta de Valor e Público-Alvo
 
 ### Proposta de Valor
-* **Para Startups:** Visibilidade qualificada para investidores-anjo e fundos, apresentação padronizada de métricas (rodada, equity, fase) e redução do tempo de captação.
-* **Para Investidores:** Curadoria e filtragem de *dealflow* por segmento (principal e secundários), fase, faixa de ticket e equity mínimo.
+* **Para Startups:** Visibilidade qualificada para investidores-anjo e fundos, apresentação padronizada de tração e redução do tempo de captação.
+* **Para Investidores:** Curadoria de *dealflow* com foco exclusivo em startups com **tração comprovada**, combinando evidências recentes, segmento, ticket e equity.
 
 ### Público-Alvo
-1. **Startups & Empreendedores:** negócios em fases de *Ideação, MVP, Tração ou Escala* em busca de *smart money*.
+1. **Startups & Empreendedores:** negócios com **tração comprovada**, mercado validado e sinais mensuráveis, em busca de *smart money*.
 2. **Investidores & Fundos:** investidores-anjo, *family offices*, corporativos e fundos de *Venture Capital (VC)*.
 
 ---
@@ -67,14 +68,14 @@ O frontend é uma **SPA em React 19 + TypeScript** com roteamento próprio (Hist
 - **Como funciona** (jornada em 3 passos), **Trilhas por público** (startup/investidor), **Segmentos** suportados, **FAQ** e **CTA final**.
 - Cabeçalho responsivo com navegação e menu mobile.
 
-### Autenticação (Supabase Auth)
+### Autenticação (Spring Security)
 - **Cadastro** e **Login** por e-mail/senha, com seleção de papel (**Startup** ou **Investidor**) no cadastro.
-- Confirmação de e-mail, tradução de erros de autenticação para PT-BR e *redirect* para `/login` após confirmação.
-- Sessão persistida e reidratada automaticamente; eventos de `onAuthStateChange` sincronizados.
+- Senhas protegidas com **BCrypt**, JWT de acesso com curta duração e refresh token rotativo.
+- Sessão persistida no navegador, renovada automaticamente e sincronizada entre abas.
 
 ### Onboarding
 - Formulário de perfil específico por papel, com validação via **Zod**:
-  - **Startup:** responsável, nome, **CNPJ** (validação de dígitos verificadores), fase, segmento principal, **segmentos secundários (opcional)**, descrição, vídeo de pitch (URL do YouTube), fundação, site, LinkedIn, **localização por geolocalização** (cidade/estado) e **rodada de captação** (meta, captado, equity, status).
+  - **Startup:** responsável, nome, **CNPJ** (validação de dígitos verificadores), segmento principal, **segmentos secundários (opcional)**, descrição, vídeo de pitch, localização, **rodada de captação** e **sinais mensais de tração** (receita, MRR, clientes, pilotos, crescimento e evidência descritiva), sempre com referência dentro dos últimos 12 meses.
   - **Investidor:** nome, **CPF** (validação), tipo, biografia, faixa de ticket (mín./máx.) e segmentos de interesse.
 - **Rascunho automático** dos formulários em `localStorage` (por usuário e tipo).
 
@@ -86,21 +87,68 @@ O frontend é uma **SPA em React 19 + TypeScript** com roteamento próprio (Hist
 ### Exclusão de Perfil (CRUD — Create, Read, Update, **Delete**)
 - **Entrada:** botão **Excluir perfil** no nav do dashboard (`dashboard-actions` do `AppPlaceholder`), ao lado de *Editar perfil* e *Sair*, de forma **discreta** (só texto/ícone, `button-danger-ghost`, com fundo de alerta apenas no hover) dentro da paleta do projeto. Implementado no componente reutilizável `components/ExcluirPerfil.tsx`.
 - **Confirmação em duas etapas:** o clique abre um diálogo (`role="alertdialog"`) explicando o que será perdido — para startup, *suas rodadas de captação e os matches recebidos*; para investidor, *seus segmentos de interesse e as propostas enviadas* — e exige o checkbox **"Entendo que essa ação não pode ser desfeita"** para habilitar o botão de confirmação.
-- **Persistência:** `excluirPerfilStartup()` e `excluirPerfilInvestidor()` em `lib/perfilApi.ts` apagam a linha em `startup`/`investidor` filtrando por `usuario_id = auth.uid()` atual. Erros passam por `traduzirErroSupabase()` (fallback genérico) e são exibidos **dentro do diálogo**, mantendo o usuário na tela; o botão mostra *Excluindo...* durante a operação.
-- **Cascata do banco (RLS):** apagar `startup` remove também suas `captacao` e `match`; apagar `investidor` remove seus `investidor_segmento` e os `match` em que participava. A linha em `usuario` **não** é apagada.
+- **Persistência:** `excluirPerfilStartup()` e `excluirPerfilInvestidor()` chamam a API autenticada; o backend deriva o usuário do JWT e apaga somente o perfil correspondente. Erros são exibidos **dentro do diálogo**, mantendo o usuário na tela; o botão mostra *Excluindo...* durante a operação.
+- **Armazenamento atual:** a exclusão remove o perfil e seus relacionamentos do PostgreSQL por cascata; a conta de acesso permanece.
 - **Pós-exclusão:** `refresh()` do `useAuth()` faz o `status` voltar a `needsProfile`, o que redireciona ao `/onboarding?aviso=perfil-excluido` com a mensagem *"Perfil excluído. Você pode criar um novo perfil quando quiser."* (o parâmetro é removido da URL após a leitura).
-- **Escopo:** é exclusão do **perfil**, não da conta — não há chamadas a `supabase.auth.admin` nem remoção em `auth.users`, e nenhuma exclusão isolada de `captacao` ou `usuario`.
+- **Escopo:** é exclusão do **perfil**, não da conta autenticada.
 
 **Roteiro de teste manual:**
-1. Com uma **startup de teste** (com captação e matches), abra o dashboard → *Excluir perfil* → confirme pelo diálogo → caia no `/onboarding` com a mensagem; no banco, some `startup`, `captacao` e `match`, permanecendo `usuario`.
-2. Repita com um **investidor**: some `investidor`, `investidor_segmento` e seus `match`, e o usuário volta ao `/onboarding`.
+1. Com uma **startup de teste**, abra o dashboard → *Excluir perfil* → confirme pelo diálogo → caia no `/onboarding` com a mensagem.
+2. Repita com um **investidor** e confirme que o usuário volta ao `/onboarding`.
 3. Cancelar (botão, backdrop ou `Escape`) e checkbox desmarcado não excluem nada; refresh em `/onboarding` não repete a mensagem.
 
 ### Explorar Rodadas (Investidor)
-- Listagem de **rodadas abertas** carregadas do Supabase (tabela `captacao`).
-- **Filtros avançados** em painel dedicado: busca por nome, segmento, fase, faixa de ticket (RangeSlider) e equity mínimo, com botão **Limpar filtros** que se habilita só quando há filtro ativo.
-- **Cards de oportunidade** padronizados (segmento com ícone, fase, status, meta, equity, progresso e match).
+- Listagem de **rodadas abertas de startups com tração**, carregadas pela API Spring Boot.
+- **Filtros avançados** em painel dedicado: busca por nome, segmento, faixa de ticket (RangeSlider) e equity mínimo, com botão **Limpar filtros** que se habilita só quando há filtro ativo.
+- **Cards de oportunidade** padronizados com rodada e resumo das métricas reais mais recentes.
 - **Modal de detalhes** com sobre a startup, **segmentos secundários** (com ícones), informações adicionais (localização, site, LinkedIn) e **vídeo de pitch** (embed do YouTube).
+
+### Feed de Tração
+- Feed autenticado para startups e investidores em `/feed`, com publicações persistidas no PostgreSQL.
+- Categorias de **Atualização**, **Conquista**, **Rodada/Captação** e **Tese/Insight**.
+- Destaque opcional de métrica, como MRR, receita, clientes ou crescimento mensal.
+- Uma mídia opcional por publicação: **imagem comprimida** ou **vídeo por URL do YouTube**.
+- Curtidas, comentários e exclusão de publicação restrita ao próprio autor.
+- Identidade visual responsiva do Nexo, incluindo tema escuro e estados de carregamento/erro/vazio.
+
+### Mídias do feed e compressão de imagens
+
+As imagens do feed **não são armazenadas em Base64 nem dentro do PostgreSQL**. O banco guarda
+somente `imagem_chave`, enquanto os bytes ficam em um bucket privado do **Neon Object Storage**.
+Na leitura do feed, o Spring Boot gera uma URL assinada temporária. Vídeos não são reenviados:
+somente o ID validado de 11 caracteres é salvo e o player usa `youtube-nocookie.com`.
+
+Fluxo de uma imagem:
+
+1. O navegador aceita JPG, PNG ou WebP com até **5 MB**.
+2. `utils/imagemFeed.ts` preserva a proporção e reduz o maior lado para, no máximo, **1600 px**.
+3. O canvas converte a imagem para **WebP** e tenta qualidades decrescentes (`0.86` a `0.54`),
+   buscando aproximadamente **500 KB** e recusando o resultado caso ultrapasse **1 MB**.
+4. O backend recebe a publicação e o arquivo juntos em `multipart/form-data`, confere MIME,
+   assinatura binária e tamanho, e envia o arquivo ao bucket antes de inserir a postagem.
+5. Se a inserção no banco falhar, o arquivo recém-enviado é removido. Ao excluir uma postagem,
+   o backend também tenta apagar seu objeto no bucket.
+
+Essa compressão reduz armazenamento e tráfego sem deformar a imagem. Ela ocorre antes do upload,
+então uma foto original de 5 MB normalmente envia apenas algumas centenas de KB. O limite de
+1 MB também é repetido em `spring.servlet.multipart.max-file-size`, pois validação no navegador
+não substitui validação no servidor.
+
+Variáveis de backend necessárias para imagens:
+
+```dotenv
+AWS_ENDPOINT_URL_S3=https://SEU-ENDPOINT-DE-STORAGE
+AWS_REGION=us-east-2
+AWS_ACCESS_KEY_ID=...
+AWS_SECRET_ACCESS_KEY=...
+STORAGE_BUCKET=altura-feed
+STORAGE_SIGNED_URL_MINUTES=60
+```
+
+Crie `altura-feed` como bucket **privado** no projeto/branch do Neon e copie as variáveis S3
+geradas pelo Neon para `backend/.env`. Sem elas, a API continua funcionando para texto e YouTube,
+mas responde com indisponibilidade quando uma imagem é enviada. Nunca coloque essas credenciais
+em uma variável `VITE_*` ou no frontend.
 
 ### Utilidades transversais
 - Validação e máscara de **CPF/CNPJ** (`utils/documentos.ts`).
@@ -114,17 +162,19 @@ O frontend é uma **SPA em React 19 + TypeScript** com roteamento próprio (Hist
 
 ```mermaid
 flowchart TD
-    A["Cadastro / Login (Supabase Auth)"] --> B{"Tipo de Perfil"}
+    A["Cadastro / Login (Spring Boot)"] --> B{"Tipo de Perfil"}
     B -->|Startup| C["Onboarding: perfil + rodada de captação"]
     B -->|Investidor| D["Onboarding: tese, ticket e segmentos"]
     C --> E["Dashboard (/app)"]
     D --> E
     E -->|Investidor| F["Explorar Rodadas (/explorar-rodadas)"]
-    F --> G["Filtros avançados (segmento, fase, ticket, equity)"]
+    F --> G["Filtros avançados (segmento, ticket, equity)"]
     G --> H["Card de oportunidade"]
     H --> I["Modal de detalhes (métricas, links, pitch)"]
     E -->|Ambos| J["Editar perfil (/editar-perfil)"]
     J --> E
+    E -->|Ambos| K["Feed de tração (/feed)"]
+    K --> L["Publicar, curtir e comentar"]
 ```
 
 ---
@@ -156,40 +206,30 @@ Após a **exclusão de perfil** pelo nav do dashboard, o usuário cai em `/onboa
 ```mermaid
 flowchart LR
     Client["SPA React 19 + TypeScript + Vite"]
-    Auth["Supabase Auth (e-mail/senha)"]
-    DB[("PostgreSQL (Supabase)")]
+    API["Spring Boot 3 / Spring Security"]
+    Database[("PostgreSQL / Neon")]
 
-    Client -->|"Session / JWT"| Auth
-    Client -->|"supabase-js"| DB
+    Client -->|"Bearer JWT / REST"| API
+    API -->|"JDBC / TLS"| Database
 ```
 
 ### Stack Tecnológica
 * **Frontend:** [React 19](https://react.dev/), [TypeScript](https://www.typescriptlang.org/), [Vite 6](https://vite.dev/), [Tailwind CSS 4](https://tailwindcss.com/) + CSS customizado.
-* **Backend/BaaS:** [Supabase](https://supabase.com/) (Auth + PostgreSQL + RLS), consumo via `@supabase/supabase-js`.
+* **Backend:** Java 17, Spring Boot 3, Spring Security Resource Server, Spring JDBC, WebSocket autenticado, BCrypt, JWT e validação Jakarta.
+* **Persistência:** PostgreSQL no Neon, acessado somente pelo backend via conexão TLS e pool HikariCP.
 * **Validação:** [Zod 4](https://zod.dev/) nos formulários de perfil.
 * **Ícones:** [lucide-react](https://lucide.dev/) + SVGs próprios.
 * **Tipografia:** `@fontsource-variable` (Inter e Plus Jakarta Sans).
-* **Seed de dados:** `@faker-js/faker` + script `src/seed.ts` (executado com `tsx`).
-* **Migrations:** SQL versionado em `supabase/migrations/`.
 
 ---
 
 ## 🗄 Modelo de Dados
 
-Tabelas principais (Supabase/PostgreSQL):
+O modelo contempla usuário, refresh token, startup, investidor, segmentos, rodada, métricas de tração, matches, feed, conversas e notificações. O esquema completo está em `database/nexo_schema.sql`; os repositórios JDBC ficam em `backend/src/main/java/com/altura/api/repository`.
 
-| Tabela | Descrição |
-| :--- | :--- |
-| `usuario` | Usuário base (nome, tipo `startup`/`investidor`, ativo). Populado pelo trigger `handle_new_user`. |
-| `startup` | Perfil da startup: segmento principal, CNPJ, fase, descrição, vídeo de pitch, fundação, site, LinkedIn, cidade/estado e coordenadas. |
-| `investidor` | Perfil do investidor: CPF, tipo, biografia, `ticket_min`, `ticket_max` e LinkedIn. |
-| `segmento` | Catálogo de segmentos (Finanças, Saúde, Educação, etc.). |
-| `startup_segmento` | **Segmentos secundários** de uma startup (N:N, além do segmento principal). |
-| `investidor_segmento` | Segmentos de interesse de um investidor (N:N). |
-| `captacao` | Rodada de captação: `valor_alvo`, `valor_captado`, `percentual_equity_oferecido`, `status`, `data_inicio`. |
+Para adicionar notificações a um banco já existente, execute `database/20261016_notifications.sql` no SQL Editor do Neon antes de reiniciar a API. A migration registra novas conexões e mudanças de status, mensagens, curtidas e comentários; interações anteriores à execução não são preenchidas retroativamente.
 
-Migrations disponíveis em `supabase/migrations/`:
-`20260101000000_schema_base` (dump do schema base: as 8 tabelas, os enums `tipo_usuario`/`status_rodada`/`status_match`, índices, constraints e RLS — roda primeiro na reconstrução de um banco novo), `20260101000001_auth_trigger_seed` (função + trigger `handle_new_user` em `auth.users` e seed dos 10 segmentos, idempotentes) e depois as alterações: `video_pitch_url`, `founded_at`, `site_location`, `split_location`, `secondary_segments`, `limit_equity_offer`, `prevent_future_founding_date`, visibilidade de LinkedIn e ajustes de RLS.
+Senhas são persistidas exclusivamente como BCrypt e refresh tokens exclusivamente como SHA-256. O navegador nunca recebe credenciais do PostgreSQL.
 
 ---
 
@@ -197,6 +237,8 @@ Migrations disponíveis em `supabase/migrations/`:
 
 ```text
 altura/
+├── backend/                    # API Spring Boot, autenticação e repositórios JDBC
+├── database/                   # Migration PostgreSQL completa
 ├── public/                     # Assets estáticos (favicon, imagem genérica, robots)
 ├── src/
 │   ├── assets/                 # Imagens, vídeos e SVGs
@@ -213,15 +255,13 @@ altura/
 │   │   ├── SegmentIcon.tsx         # Ícone por segmento
 │   │   └── RangeSlider.tsx         # Slider de faixa (ticket)
 │   ├── data/                   # Dados e tipos da landing/perfil
-│   ├── lib/                    # supabase.ts e perfilApi.ts (acesso a dados)
+│   ├── lib/                    # cliente HTTP e contratos da API REST
 │   ├── utils/                  # documentos, localizacao, videos, perfilDraft
-│   ├── seed.ts                 # Script de seed (npm run seed)
 │   ├── App.tsx                 # Roteamento e proteção de rotas
 │   ├── index.css               # Tailwind + design system global
 │   └── main.tsx                # Entrada do React
 ├── docs/
 │   └── openapi.yaml            # Especificação da API (OpenAPI 3.1, PT-BR)
-├── supabase/migrations/        # Migrations SQL versionadas (schema base + trigger/seed + alterações)
 ├── .env.example                # Modelo de variáveis de ambiente
 ├── vite.config.ts
 └── README.md
@@ -231,33 +271,12 @@ altura/
 
 ## 📖 Documentação da API (OpenAPI)
 
-A especificação da API da Altura está versionada em **`docs/openapi.yaml`** (OpenAPI 3.1, campos e mensagens em PT-BR). Ela documenta **a API que já existe**: o Supabase (GoTrue + PostgREST) consumida pelo front — não há backend próprio. Os caminhos (`/auth/login`, `/startups`, `/captacoes`, `/segmentos`…) são o **mapeamento conceitual** das chamadas reais de `src/auth/authApi.ts` e `src/lib/perfilApi.ts`, não rotas HTTP nossas.
+Com o backend em execução, o contrato real é gerado pelo Springdoc:
 
-**Validar** (deve passar sem erros):
+- Swagger UI: `http://localhost:8080/swagger-ui.html`
+- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
 
-```bash
-npx @redocly/cli lint docs/openapi.yaml
-```
-
-**Visualizar** (preview local com hot-reload):
-
-```bash
-npx @redocly/cli preview-docs docs/openapi.yaml   # http://localhost:9000
-# porta alternativa: --port 8080
-```
-
-**Gerar HTML estático** (o arquivo gerado fica fora do versionamento — ver `.gitignore`):
-
-```bash
-npx @redocly/cli build-docs docs/openapi.yaml -o docs/openapi.html
-```
-
-**Sem instalar nada:**
-
-* [editor.swagger.io](https://editor.swagger.io) → *File → Import file* → `docs/openapi.yaml`
-* [redocly.com/redoc](https://redocly.com/redoc) → colar o conteúdo do YAML
-
-> ⚠️ O botão **"Try it out"** do Swagger/Redoc não executa chamadas reais: as rotas são um mapeamento conceitual das APIs do Supabase e o campo `servers` usa o placeholder `https://{refProjeto}.supabase.co` (substitua pelo ref do projeto para ilustrar).
+O arquivo `docs/openapi.yaml` documenta as rotas principais do backend atual.
 
 ---
 
@@ -270,10 +289,10 @@ O projeto adota princípios de privacidade desde a concepção (*Privacy by Desi
 * **Dados do Negócio:** CNPJ/CPF, estágio, tese, faixas financeiras declaradas, métricas da rodada de captação e localização aproximada (cidade/estado).
 
 ### 2. Segurança e Direitos
-* **Autenticação:** gerenciada pelo Supabase Auth, com senhas jamais expostas ao cliente e confirmação de e-mail.
-* **Controle de Acesso:** **Row Level Security (RLS)** nas tabelas, garantindo que cada usuário só acesse o que lhe pertence.
+* **Autenticação:** implementada no Spring Boot, com hash BCrypt, JWT curto e refresh token rotativo.
+* **Controle de Acesso:** Spring Security valida o JWT e a API usa o `sub` autenticado para limitar cada operação ao titular.
 * **Finalidade e Minimização:** coleta estrita dos dados necessários para o matchmaking.
-* **Direitos do Titular:** edição e exclusão dos dados cadastrais via perfil, com base legal documentada. A **exclusão de perfil** é autoatendida pelo painel (nav do dashboard), com confirmação explícita; a conta de acesso (`auth.users`) é mantida.
+* **Direitos do Titular:** edição e exclusão dos dados cadastrais via perfil, com base legal documentada. A **exclusão de perfil** é autoatendida pelo painel, com confirmação explícita; a conta de acesso é mantida.
 
 ---
 
@@ -282,7 +301,7 @@ O projeto adota princípios de privacidade desde a concepção (*Privacy by Desi
 ### Pré-requisitos
 * [Node.js](https://nodejs.org/) (versão 20.x ou superior recomendada)
 * `npm`
-* Um projeto no [Supabase](https://supabase.com/) com as migrations aplicadas
+* Java 17 e Maven 3.9+
 
 ### Passo a Passo
 ```bash
@@ -293,14 +312,19 @@ cd altura_p.i_2026.2
 # 2. Instalar as dependências
 npm install
 
-# 3. Configurar variáveis de ambiente (.env)
-#    VITE_SUPABASE_URL=...
-#    VITE_SUPABASE_ANON_KEY=...
+# 3. Configurar variáveis do frontend (.env)
+#    VITE_API_URL=http://localhost:8080/api
 
-# 4. (Opcional) Popular o banco com dados de exemplo
-npm run seed
+# 4. Configurar o backend seguindo backend/.env.example
+#    JWT_SECRET deve ter no mínimo 32 bytes fora do ambiente local
+#    Para imagens do feed, configurar também as variáveis AWS_* e STORAGE_BUCKET
 
-# 5. Iniciar o servidor de desenvolvimento
+# 5. Em outro terminal, iniciar a API
+cd backend
+mvn spring-boot:run
+
+# 6. Em outro terminal, iniciar o frontend
+cd ..
 npm run dev
 ```
 
@@ -312,7 +336,6 @@ Acesse no navegador: `http://localhost:5173`.
 | `npm run dev` | Sobe o servidor de desenvolvimento (Vite). |
 | `npm run build` | Checagem de tipos (`tsc -b`) + build de produção. |
 | `npm run preview` | Pré-visualiza o build de produção. |
-| `npm run seed` | Popula o Supabase com startups, investidores e rodadas de exemplo. |
 
 ---
 

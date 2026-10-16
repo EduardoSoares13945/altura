@@ -1,5 +1,4 @@
 import { createContext } from 'react'
-import type { Session, User } from '@supabase/supabase-js'
 
 export type TipoUsuario = 'startup' | 'investidor'
 
@@ -8,6 +7,18 @@ export interface Usuario {
   nome: string
   tipo: TipoUsuario
   ativo: boolean
+}
+
+export interface AuthUser {
+  id: string
+  email: string
+}
+
+export interface AuthSession {
+  accessToken: string
+  refreshToken: string
+  expiresAt: number
+  user: AuthUser
 }
 
 /**
@@ -20,8 +31,8 @@ export type AuthStatus = 'loading' | 'signedOut' | 'needsProfile' | 'ready'
 
 export interface AuthContextValue {
   status: AuthStatus
-  session: Session | null
-  user: User | null
+  session: AuthSession | null
+  user: AuthUser | null
   usuario: Usuario | null
   /** Recarrega o perfil (chame ao terminar o onboarding). */
   refresh: () => Promise<void>

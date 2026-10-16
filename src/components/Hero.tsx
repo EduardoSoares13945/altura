@@ -72,7 +72,7 @@ export function Hero() {
               <img src={startupImage} width="56" height="56" alt="Imagem genérica de startup" />
               <div>
                 <h2>{startupExemplo.nome}</h2>
-                <p>{segmento?.nome} <span aria-hidden="true">•</span> Fase: {startupExemplo.fase}</p>
+                <p>{segmento?.nome}</p>
               </div>
             </div>
             <div className="round-metrics">

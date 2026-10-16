@@ -1,8 +1,11 @@
 import { AudiencePaths } from './components/AudiencePaths'
 import { AppPlaceholder } from './components/AppPlaceholder'
 import { AuthPage } from './components/AuthPage'
+import { ConversationsPage } from './components/ConversationsPage'
 import { EditProfilePage } from './components/EditProfilePage'
 import { ExplorarRodadasPage } from './components/ExplorarRodadasPage'
+import { FeedPage } from './components/FeedPage'
+import { StartupPublicProfilePage } from './components/StartupPublicProfilePage'
 import { Faq } from './components/Faq'
 import { FinalCta } from './components/FinalCta'
 import { Footer } from './components/Footer'
@@ -24,6 +27,9 @@ type Route =
   | { page: 'app' }
   | { page: 'edit-profile' }
   | { page: 'explorar-rodadas' }
+  | { page: 'feed' }
+  | { page: 'startup-profile'; userId: string }
+  | { page: 'conversations' }
 
 function getTipoFromQuery(search = window.location.search): TipoUsuario | undefined {
   const tipo = new URLSearchParams(search).get('tipo')
@@ -39,6 +45,10 @@ function getRoute(pathname = window.location.pathname, search = window.location.
   if (pathname === '/app') return { page: 'app' }
   if (pathname === '/editar-perfil') return { page: 'edit-profile' }
   if (pathname === '/explorar-rodadas') return { page: 'explorar-rodadas' }
+  if (pathname === '/feed') return { page: 'feed' }
+  const startupProfileMatch = pathname.match(/^\/startups\/([^/]+)$/)
+  if (startupProfileMatch) return { page: 'startup-profile', userId: startupProfileMatch[1] }
+  if (pathname === '/conversas') return { page: 'conversations' }
   return { page: 'home' }
 }
 
@@ -65,7 +75,7 @@ export default function App() {
       const url = new URL(href, window.location.href)
       if (url.origin !== window.location.origin) return
 
-      const isAppRoute = ['/', '/login', '/cadastro', '/cadastro/startup', '/cadastro/investidor', '/onboarding', '/app', '/editar-perfil', '/explorar-rodadas'].includes(url.pathname)
+      const isAppRoute = ['/', '/login', '/cadastro', '/cadastro/startup', '/cadastro/investidor', '/onboarding', '/app', '/editar-perfil', '/explorar-rodadas', '/feed', '/conversas'].includes(url.pathname) || /^\/startups\/[^/]+$/.test(url.pathname)
       const isSectionLink = url.pathname === '/' && url.hash.length > 0
       if (!isAppRoute && !isSectionLink) return
 
@@ -93,7 +103,7 @@ export default function App() {
     if (status === 'loading') return
 
     const isAuthRoute = route.page === 'login' || route.page === 'register'
-    const isProtectedRoute = route.page === 'app' || route.page === 'onboarding' || route.page === 'edit-profile' || route.page === 'explorar-rodadas'
+    const isProtectedRoute = route.page === 'app' || route.page === 'onboarding' || route.page === 'edit-profile' || route.page === 'explorar-rodadas' || route.page === 'feed' || route.page === 'startup-profile' || route.page === 'conversations'
 
     if (status === 'signedOut' && isProtectedRoute) {
       navigate('/login')
@@ -101,7 +111,7 @@ export default function App() {
     }
 
     if (status === 'needsProfile') {
-      if (route.page !== 'onboarding' && (isAuthRoute || route.page === 'app' || route.page === 'edit-profile' || route.page === 'explorar-rodadas')) navigate('/onboarding')
+      if (route.page !== 'onboarding' && (isAuthRoute || route.page === 'app' || route.page === 'edit-profile' || route.page === 'explorar-rodadas' || route.page === 'feed' || route.page === 'startup-profile' || route.page === 'conversations')) navigate('/onboarding')
       return
     }
 
@@ -111,7 +121,7 @@ export default function App() {
   }, [route.page, status])
 
   const isHome = route.page === 'home'
-  const shouldShowProtectedLoading = status === 'loading' && (route.page === 'app' || route.page === 'onboarding')
+  const shouldShowProtectedLoading = status === 'loading' && (route.page === 'app' || route.page === 'onboarding' || route.page === 'edit-profile' || route.page === 'explorar-rodadas' || route.page === 'feed' || route.page === 'startup-profile' || route.page === 'conversations')
 
   return (
     <>
@@ -139,6 +149,12 @@ export default function App() {
         <EditProfilePage onCancel={() => navigate('/app')} onSave={() => navigate('/app')} />
       ) : route.page === 'explorar-rodadas' ? (
         <ExplorarRodadasPage onBack={() => navigate('/app')} />
+      ) : route.page === 'feed' ? (
+        <FeedPage onBack={() => navigate('/app')} onOpenStartup={(userId) => navigate(`/startups/${userId}`)} />
+      ) : route.page === 'startup-profile' ? (
+        <StartupPublicProfilePage startupUserId={route.userId} onBack={() => navigate('/feed')} onOpenConversations={() => navigate('/conversas')} />
+      ) : route.page === 'conversations' ? (
+        <ConversationsPage onBack={() => navigate('/app')} onOpenStartup={(userId) => navigate(`/startups/${userId}`)} />
       ) : (
         <AuthPage mode={route.page === 'login' ? 'login' : 'register'} initialRole={route.page === 'register' ? route.role : undefined} />
       )}

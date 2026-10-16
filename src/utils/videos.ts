@@ -1,18 +1,27 @@
 const youtubeHosts = new Set(['youtube.com', 'm.youtube.com', 'youtu.be'])
 
 export function validarUrlYoutube(value: string): boolean {
+  return Boolean(extrairIdYoutube(value))
+}
+
+export function extrairIdYoutube(value: string): string | null {
   try {
     const url = new URL(value.trim())
     const hostname = url.hostname.toLowerCase().replace(/^www\./, '')
 
-    if (url.protocol !== 'https:' || !youtubeHosts.has(hostname)) return false
+    if (url.protocol !== 'https:' || !youtubeHosts.has(hostname)) return null
 
-    if (hostname === 'youtu.be') return url.pathname.length > 1
-    if (url.pathname === '/watch') return Boolean(url.searchParams.get('v'))
+    let id: string | null = null
+    if (hostname === 'youtu.be') id = url.pathname.split('/').filter(Boolean)[0] ?? null
+    else if (url.pathname === '/watch') id = url.searchParams.get('v')
+    else {
+      const match = url.pathname.match(/^\/(?:embed|live|shorts)\/([^/]+)/)
+      id = match?.[1] ?? null
+    }
 
-    return /^\/(embed|live|shorts)\/[^/]+/.test(url.pathname)
+    return id && /^[A-Za-z0-9_-]{11}$/.test(id) ? id : null
   } catch {
-    return false
+    return null
   }
 }
 

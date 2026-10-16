@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useAuth } from '../auth/useAuth'
 import { excluirPerfilInvestidor, excluirPerfilStartup } from '../lib/perfilApi'
-import { traduzirErroSupabase } from '../lib/supabaseErrors'
+import { traduzirErroApi } from '../lib/apiErrors'
 import { limparRascunho } from '../utils/perfilDraft'
 
 interface ExcluirPerfilButtonProps {
@@ -61,7 +61,7 @@ export function ExcluirPerfilButton({ onExcluido }: ExcluirPerfilButtonProps) {
       await refresh()
       onExcluido()
     } catch (error) {
-      setErro(traduzirErroSupabase(error))
+      setErro(traduzirErroApi(error))
     } finally {
       setExcluindo(false)
     }

@@ -3,20 +3,29 @@ import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } 
 import { z } from 'zod'
 import { signOut } from '../auth/authApi'
 import { useAuth } from '../auth/useAuth'
-import { fasesStartup, tiposInvestidor } from '../data/perfil'
+import { tiposInvestidor } from '../data/perfil'
 import { estadosBrasil } from '../data/perfil'
 import { carregarSegmentos, salvarPerfilInvestidor, salvarPerfilStartup, type SegmentoOption } from '../lib/perfilApi'
-import { traduzirErroSupabase } from '../lib/supabaseErrors'
+import { traduzirErroApi } from '../lib/apiErrors'
 import { mascararCnpj, mascararCpf, somenteDigitos, validarCnpj, validarCpf } from '../utils/documentos'
 import { validarUrlLinkedin, validarUrlWeb, validarUrlYoutube } from '../utils/videos'
 import { carregarRascunho, limparRascunho, salvarRascunho } from '../utils/perfilDraft'
 import { buscarLocalizacaoPorCoordenadas } from '../utils/localizacao'
+import { mesAtual } from '../utils/datas'
 import { Brand } from './Brand'
 import { ThemeToggle } from './ThemeToggle'
 import { RangeSlider } from './RangeSlider'
 import { StartupProfilePreview } from './StartupProfilePreview'
 import { InvestorProfilePreview } from './InvestorProfilePreview'
+import { ProfileImageField } from './ProfileImageField'
 import { SegmentIcon } from './SegmentIcon'
+import {
+  criarTracaoInicial,
+  startupTractionSchema,
+  temSinalTracao,
+  TractionFields,
+  type StartupTractionValues,
+} from './TractionFields'
 import linkedinLogo from '../assets/svg/linkedin-svgrepo-com.svg'
 
 interface OnboardingPageProps {
@@ -41,7 +50,6 @@ const startupSchema = z.object({
   nomeResponsavel: z.string().trim().min(2, 'Informe o nome do responsável.'),
   nomeStartup: z.string().trim().min(2, 'Informe o nome da startup.'),
   cnpj: z.string().refine(validarCnpj, 'Informe um CNPJ válido.'),
-  fase: z.enum(fasesStartup, { message: 'Escolha a fase da startup.' }),
   segmentoId: z.coerce.number().int().positive('Escolha um segmento.'),
   segmentosSecundarios: z.array(z.number()).default([]),
   descricao: z.string().trim().min(10, 'Descreva a startup em pelo menos 10 caracteres.').max(500, 'Use no máximo 500 caracteres.'),
@@ -56,31 +64,31 @@ const startupSchema = z.object({
   valorCaptado: z.coerce.number().min(0, 'Informe um valor captado válido.'),
   percentualEquityOferecido: z.coerce.number().positive('Informe o equity oferecido.').max(49.9, 'O equity não pode ultrapassar 49,9%.'),
   status: z.enum(['aberta', 'encerrada']),
+}).and(startupTractionSchema).superRefine((data, context) => {
+  if (!temSinalTracao(data)) {
+    context.addIssue({ code: 'custom', path: ['clientesAtivos'], message: 'Informe ao menos um sinal real de tração: receita, MRR, clientes ou pilotos ativos.' })
+  }
+  if (data.evidenciaTracao.trim().length < 20) {
+    context.addIssue({ code: 'custom', path: ['evidenciaTracao'], message: 'Descreva ao menos uma evidência de tração em 20 caracteres.' })
+  }
 })
-
-function mesAtual() {
-  return new Date().toISOString().slice(0, 7)
-}
 
 const investidorSchema = z.object({
   nome: z.string().trim().min(2, 'Informe seu nome.'),
   cpf: z.string().refine(validarCpf, 'Informe um CPF válido.'),
   tipo: z.enum(tiposInvestidor, { message: 'Escolha o tipo de investidor.' }),
   biografia: z.string().trim().min(10, 'Escreva uma biografia curta.').max(500, 'Use no máximo 500 caracteres.'),
-  ticketMin: z.coerce.number().min(0, 'Informe um valor mínimo válido.'),
-  ticketMax: z.coerce.number().min(0, 'Informe um valor máximo válido.'),
   segmentos: z.array(z.number()).min(1, 'Escolha pelo menos um segmento.'),
   linkedinUrl: z.string().trim().refine((value) => value === '' || validarUrlLinkedin(value), 'Informe uma URL válida do LinkedIn.'),
-}).refine((data) => data.ticketMin <= data.ticketMax, {
-  path: ['ticketMax'],
-  message: 'O valor máximo deve ser maior ou igual ao mínimo.',
+  localizacao: z.string().trim().max(120, 'Use no máximo 120 caracteres.'),
+  cidade: z.string().trim().min(2, 'Informe a cidade.').max(100, 'Use no máximo 100 caracteres.'),
+  estado: z.enum(estadosBrasil, { message: 'Selecione o estado.' }),
 })
 
-interface StartupValues {
+interface StartupValues extends StartupTractionValues {
   nomeResponsavel: string
   nomeStartup: string
   cnpj: string
-  fase: string
   segmentoId: number
   segmentosSecundarios: number[]
   descricao: string
@@ -93,10 +101,11 @@ interface StartupValues {
   siteUrl: string
   linkedinUrl: string
   localizacao: string
-    cidade: string
-    estado: string
+  cidade: string
+  estado: string
   latitude: number | null
   longitude: number | null
+  imagemPerfil: string
 }
 
 interface InvestidorValues {
@@ -104,10 +113,14 @@ interface InvestidorValues {
   cpf: string
   tipo: string
   biografia: string
-  ticketMin: number
-  ticketMax: number
   segmentos: number[]
   linkedinUrl: string
+  localizacao: string
+  cidade: string
+  estado: string
+  latitude: number | null
+  longitude: number | null
+  imagemPerfil: string
 }
 type StartupField = keyof StartupValues
 type InvestidorField = keyof InvestidorValues
@@ -116,7 +129,6 @@ const startupInitial: StartupValues = {
   nomeResponsavel: '',
   nomeStartup: '',
   cnpj: '',
-  fase: 'MVP',
   segmentoId: 0,
   segmentosSecundarios: [],
   descricao: '',
@@ -133,6 +145,8 @@ const startupInitial: StartupValues = {
   estado: '',
   latitude: null,
   longitude: null,
+  imagemPerfil: '',
+  ...criarTracaoInicial(),
 }
 
 const investidorInitial: InvestidorValues = {
@@ -140,10 +154,14 @@ const investidorInitial: InvestidorValues = {
   cpf: '',
   tipo: 'Investidor-anjo',
   biografia: '',
-  ticketMin: 10000,
-  ticketMax: 50000,
   segmentos: [],
   linkedinUrl: '',
+  localizacao: '',
+  cidade: '',
+  estado: '',
+  latitude: null,
+  longitude: null,
+  imagemPerfil: '',
 }
 
 export function OnboardingPage({ onComplete }: OnboardingPageProps) {
@@ -225,6 +243,7 @@ export function OnboardingPage({ onComplete }: OnboardingPageProps) {
   }
 
   const usarMinhaLocalizacao = () => {
+    const tipoPerfil = usuario.tipo
     if (!navigator.geolocation) {
       setLocationMessage('Seu navegador não oferece localização automática.')
       return
@@ -232,11 +251,20 @@ export function OnboardingPage({ onComplete }: OnboardingPageProps) {
     setLocationMessage('Solicitando permissão...')
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
-        setStartupValues((current) => ({ ...current, latitude: coords.latitude, longitude: coords.longitude }))
+        if (tipoPerfil === 'startup') {
+          setStartupValues((current) => ({ ...current, latitude: coords.latitude, longitude: coords.longitude }))
+        } else {
+          setInvestidorValues((current) => ({ ...current, latitude: coords.latitude, longitude: coords.longitude }))
+        }
         void buscarLocalizacaoPorCoordenadas(coords.latitude, coords.longitude)
           .then((localizacao) => {
-            if (localizacao.cidade) setStartupField('cidade', localizacao.cidade)
-            if (localizacao.estado) setStartupField('estado', localizacao.estado)
+            if (tipoPerfil === 'startup') {
+              if (localizacao.cidade) setStartupField('cidade', localizacao.cidade)
+              if (localizacao.estado) setStartupField('estado', localizacao.estado)
+            } else {
+              if (localizacao.cidade) setInvestidorField('cidade', localizacao.cidade)
+              if (localizacao.estado) setInvestidorField('estado', localizacao.estado)
+            }
             setLocationMessage(localizacao.cidade || localizacao.estado ? 'Cidade e estado identificados. Confirme os dados.' : 'Coordenadas capturadas. Informe a cidade e o estado.')
           })
           .catch(() => setLocationMessage('Coordenadas capturadas. Informe a cidade e o estado.'))
@@ -271,7 +299,7 @@ export function OnboardingPage({ onComplete }: OnboardingPageProps) {
         nomeResponsavel: parsed.data.nomeResponsavel.trim(),
         nomeStartup: parsed.data.nomeStartup.trim(),
         cnpj: somenteDigitos(parsed.data.cnpj),
-        fase: parsed.data.fase,
+        fase: 'Tração',
         segmentoId: parsed.data.segmentoId,
         segmentosSecundarios: parsed.data.segmentosSecundarios.filter((id) => id !== parsed.data.segmentoId),
         descricao: parsed.data.descricao.trim(),
@@ -284,18 +312,28 @@ export function OnboardingPage({ onComplete }: OnboardingPageProps) {
         estado: parsed.data.estado,
         latitude: startupValues.latitude,
         longitude: startupValues.longitude,
+        imagemPerfil: startupValues.imagemPerfil || null,
         rodada: {
           valorAlvo: parsed.data.valorAlvo,
           valorCaptado: parsed.data.valorCaptado,
           percentualEquityOferecido: parsed.data.percentualEquityOferecido,
           status: parsed.data.status,
         },
+        tracao: temSinalTracao(parsed.data) && parsed.data.evidenciaTracao.trim().length >= 20 ? {
+          mesReferencia: parsed.data.mesReferencia,
+          receitaMensal: nullableNumber(parsed.data.receitaMensal),
+          mrr: nullableNumber(parsed.data.mrr),
+          clientesAtivos: nullableNumber(parsed.data.clientesAtivos),
+          pilotosAtivos: nullableNumber(parsed.data.pilotosAtivos),
+          crescimentoMensal: nullableNumber(parsed.data.crescimentoMensal),
+          evidenciaTracao: parsed.data.evidenciaTracao.trim(),
+        } : null,
       })
       await refresh()
       limparRascunho(user.id, 'startup-onboarding')
       onComplete()
     } catch (error) {
-      setServerError(traduzirErroSupabase(error))
+      setServerError(traduzirErroApi(error))
     } finally {
       setLoading(false)
     }
@@ -318,16 +356,20 @@ export function OnboardingPage({ onComplete }: OnboardingPageProps) {
         cpf: somenteDigitos(parsed.data.cpf),
         tipo: parsed.data.tipo,
         biografia: parsed.data.biografia.trim(),
-        ticketMin: parsed.data.ticketMin,
-        ticketMax: parsed.data.ticketMax,
         segmentos: parsed.data.segmentos,
         linkedinUrl: parsed.data.linkedinUrl.trim() || null,
+        localizacao: parsed.data.localizacao.trim() || null,
+        cidade: parsed.data.cidade.trim(),
+        estado: parsed.data.estado,
+        latitude: investidorValues.latitude,
+        longitude: investidorValues.longitude,
+        imagemPerfil: investidorValues.imagemPerfil || null,
       })
       await refresh()
       limparRascunho(user.id, 'investidor-onboarding')
       onComplete()
     } catch (error) {
-      setServerError(traduzirErroSupabase(error))
+      setServerError(traduzirErroApi(error))
     } finally {
       setLoading(false)
     }
@@ -360,15 +402,11 @@ export function OnboardingPage({ onComplete }: OnboardingPageProps) {
               <Field label="Nome da startup" error={fieldErrors.nomeStartup}>
                 <input value={startupValues.nomeStartup} onChange={(event) => setStartupField('nomeStartup', event.target.value)} />
               </Field>
+              <ProfileImageField tipo="startup" value={startupValues.imagemPerfil} onChange={(value) => setStartupField('imagemPerfil', value)} />
               <Field label="CNPJ" error={fieldErrors.cnpj}>
                 <input inputMode="numeric" value={startupValues.cnpj} onChange={(event) => setStartupField('cnpj', mascararCnpj(event.target.value))} />
               </Field>
               <div className="profile-grid">
-                <Field label="Fase" error={fieldErrors.fase}>
-                  <select value={startupValues.fase} onChange={(event) => setStartupField('fase', event.target.value)}>
-                    {fasesStartup.map((fase) => <option key={fase} value={fase}>{fase}</option>)}
-                  </select>
-                </Field>
                 <Field label="Segmento" error={fieldErrors.segmentoId}>
                   <div className="segment-select-with-icon">
                     <SegmentIcon nome={segmentos.find((segmento) => segmento.id === startupValues.segmentoId)?.nome ?? ''} />
@@ -433,6 +471,7 @@ export function OnboardingPage({ onComplete }: OnboardingPageProps) {
                 <button className="button button-outline button-compact" type="button" onClick={usarMinhaLocalizacao}><LocateFixed size={16} aria-hidden="true" />Usar minha localização</button>
                 {locationMessage && <small>{locationMessage}</small>}
               </div>
+              <TractionFields values={startupValues} errors={fieldErrors} onChange={setStartupField} />
               <RangeSlider
                 label="Valores da rodada"
                 min={0}
@@ -481,6 +520,7 @@ export function OnboardingPage({ onComplete }: OnboardingPageProps) {
               <Field label="Nome" error={fieldErrors.nome}>
                 <input value={investidorValues.nome} onChange={(event) => setInvestidorField('nome', event.target.value)} />
               </Field>
+              <ProfileImageField tipo="investidor" value={investidorValues.imagemPerfil} onChange={(value) => setInvestidorField('imagemPerfil', value)} />
               <Field label="CPF" error={fieldErrors.cpf}>
                 <input inputMode="numeric" value={investidorValues.cpf} onChange={(event) => setInvestidorField('cpf', mascararCpf(event.target.value))} />
               </Field>
@@ -489,26 +529,27 @@ export function OnboardingPage({ onComplete }: OnboardingPageProps) {
                   {tiposInvestidor.map((tipo) => <option key={tipo} value={tipo}>{tipo}</option>)}
                 </select>
               </Field>
-              <RangeSlider
-                label="Faixa de investimento"
-                min={0}
-                max={10000000}
-                step={50000}
-                valueMin={investidorValues.ticketMin}
-                valueMax={investidorValues.ticketMax}
-                onChange={(min, max) => {
-                  setInvestidorField('ticketMin', min)
-                  setInvestidorField('ticketMax', max)
-                }}
-              />
-              {fieldErrors.ticketMin && <small className="form-error">{fieldErrors.ticketMin}</small>}
-              {fieldErrors.ticketMax && <small className="form-error">{fieldErrors.ticketMax}</small>}
               <Field label="Biografia" error={fieldErrors.biografia}>
                 <textarea maxLength={500} rows={5} placeholder="Ex.: Investidor com experiência em [área], interessado em apoiar negócios de [segmentos] com [capital, mentoria ou conexões]." value={investidorValues.biografia} onChange={(event) => setInvestidorField('biografia', event.target.value)} />
               </Field>
               <Field label={<><span>LinkedIn</span> <span className="optional-label">(opcional)</span></>} error={fieldErrors.linkedinUrl}>
                 <div className="profile-field-with-icon"><img className="linkedin-field-icon" src={linkedinLogo} alt="" /><input type="url" placeholder="https://www.linkedin.com/in/..." value={investidorValues.linkedinUrl} onChange={(event) => setInvestidorField('linkedinUrl', event.target.value)} /></div>
               </Field>
+              <div className="profile-grid">
+                <Field label="Cidade" error={fieldErrors.cidade}>
+                  <div className="profile-field-with-icon"><MapPin size={17} aria-hidden="true" /><input placeholder="Cidade" value={investidorValues.cidade} onChange={(event) => setInvestidorField('cidade', event.target.value)} /></div>
+                </Field>
+                <Field label="Estado" error={fieldErrors.estado}>
+                  <select value={investidorValues.estado} onChange={(event) => setInvestidorField('estado', event.target.value)}>
+                    <option value="">Selecione</option>
+                    {estadosBrasil.map((estado) => <option key={estado} value={estado}>{estado}</option>)}
+                  </select>
+                </Field>
+              </div>
+              <div className="location-actions">
+                <button className="button button-outline button-compact" type="button" onClick={usarMinhaLocalizacao}><LocateFixed size={16} aria-hidden="true" />Usar minha localização</button>
+                {locationMessage && <small>{locationMessage}</small>}
+              </div>
               <fieldset className="segment-selector">
                 <legend>Segmentos de interesse</legend>
                 <div>
@@ -590,9 +631,9 @@ function OnboardingAside({
             <p>Prévia do perfil</p>
             <h2>Veja como sua startup será apresentada.</h2>
             <StartupProfilePreview
+              imagemPerfil={startupValues.imagemPerfil}
               nomeStartup={startupValues.nomeStartup}
               segmentoNome={segmentos.find((segmento) => segmento.id === startupValues.segmentoId)?.nome ?? ''}
-              fase={startupValues.fase}
               descricao={startupValues.descricao}
               videoPitchUrl={startupValues.videoPitchUrl}
               valorAlvo={startupValues.valorAlvo}
@@ -600,6 +641,11 @@ function OnboardingAside({
               percentualEquityOferecido={startupValues.percentualEquityOferecido}
               status={startupValues.status}
               dataFundacao={startupValues.dataFundacao}
+              receitaMensal={startupValues.receitaMensal}
+              mrr={startupValues.mrr}
+              clientesAtivos={startupValues.clientesAtivos}
+              pilotosAtivos={startupValues.pilotosAtivos}
+              crescimentoMensal={startupValues.crescimentoMensal}
             />
           </>
         ) : (
@@ -607,15 +653,20 @@ function OnboardingAside({
             <p>Prévia do perfil</p>
             <h2>Veja como você será apresentado.</h2>
             <InvestorProfilePreview
+              imagemPerfil={investidorValues.imagemPerfil}
               nome={investidorValues.nome}
               tipo={investidorValues.tipo}
-              ticketMin={investidorValues.ticketMin}
-              ticketMax={investidorValues.ticketMax}
               segmentos={selectedSegmentNames}
+              cidade={investidorValues.cidade}
+              estado={investidorValues.estado}
             />
           </>
         )}
       </div>
     </aside>
   )
+}
+
+function nullableNumber(value: string | number) {
+  return value === '' ? null : Number(value)
 }

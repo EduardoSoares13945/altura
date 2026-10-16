@@ -2,7 +2,7 @@ export type TipoUsuario = 'startup' | 'investidor'
 export type StatusRodada = 'aberta' | 'encerrada' | 'cancelada'
 
 export interface Segmento { id: number; nome: string }
-export interface Startup { id: number; nome: string; fase: string; descricao: string; segmento_id: number }
+export interface Startup { id: number; nome: string; descricao: string; segmento_id: number }
 export interface Captacao {
   id: number
   startup_id: number
@@ -23,8 +23,8 @@ export const navItems = [
 ] as const
 
 export const hero = {
-  title: 'Onde boas ideias encontram quem investe nelas.',
-  description: 'A Altura aproxima startups em busca de capital e investidores em busca de oportunidades, com rodadas de captação claras, match por segmento e propostas em um só lugar.',
+  title: 'Tração real encontra capital inteligente.',
+  description: 'A Altura conecta startups que já validaram seu mercado a investidores em busca de oportunidades consistentes, com métricas recentes, rodadas claras e contexto para decidir.',
   actions: [
     { label: 'Sou startup', helper: 'Abra uma rodada de captação', href: '/cadastro/startup', type: 'startup' as TipoUsuario },
     { label: 'Sou investidor', helper: 'Encontre startups do seu interesse', href: '/cadastro/investidor', type: 'investidor' as TipoUsuario },
@@ -55,8 +55,8 @@ export const auth = {
     alternateHref: '/login',
     roleLabel: 'Tipo de perfil',
     roles: [
-      { type: 'startup' as TipoUsuario, label: 'Startup', description: 'Para abrir rodadas e receber propostas.' },
-      { type: 'investidor' as TipoUsuario, label: 'Investidor', description: 'Para descobrir startups e enviar propostas.' },
+      { type: 'startup' as TipoUsuario, label: 'Startup', description: 'Para apresentar sua tração, abrir rodadas e receber propostas.' },
+      { type: 'investidor' as TipoUsuario, label: 'Investidor', description: 'Para descobrir startups em tração e enviar propostas.' },
     ],
     fields: [
       { id: 'email', label: 'E-mail', type: 'email', placeholder: 'voce@altura.com.br', autoComplete: 'email' },
@@ -87,7 +87,6 @@ export const segmentos: Segmento[] = [
 export const startupExemplo: Startup = {
   id: 1,
   nome: 'Aurora Pay',
-  fase: 'MVP',
   descricao: 'Plataforma fictícia de serviços financeiros.',
   segmento_id: 1,
 }
@@ -106,8 +105,8 @@ export const captacaoExemplo: Captacao = {
 export const steps = [
   {
     number: '01',
-    title: 'Crie seu perfil',
-    description: 'Startups informam CNPJ, fase, segmento e descrição; investidores informam biografia, faixa de investimento e segmentos de interesse.',
+    title: 'Comprove sua tração',
+    description: 'Startups apresentam clientes, receita, crescimento ou pilotos ativos; investidores definem sua tese e segmentos de interesse.',
   },
   {
     number: '02',
@@ -125,9 +124,9 @@ export const audiences = [
   {
     type: 'startup' as TipoUsuario,
     eyebrow: 'Para startups',
-    title: 'Capte com clareza, do perfil à proposta.',
+    title: 'Transforme tração em uma rodada mais convincente.',
     items: [
-      'Cadastre sua startup com CNPJ, fase, segmento e descrição.',
+      'Apresente clientes, receita, MRR, pilotos e crescimento recente.',
       'Abra uma rodada: meta, % de equity e período.',
       'Receba propostas e responda: aceitar ou recusar.',
       'Acompanhe o valor captado até a meta.',
@@ -138,11 +137,11 @@ export const audiences = [
   {
     type: 'investidor' as TipoUsuario,
     eyebrow: 'Para investidores',
-    title: 'Encontre oportunidades alinhadas à sua tese.',
+    title: 'Encontre startups com mercado validado.',
     items: [
       'Monte seu perfil com biografia e tipo de investidor.',
-      'Defina sua faixa de investimento (mínimo e máximo).',
-      'Escolha segmentos de interesse e explore rodadas abertas.',
+      'Defina os segmentos alinhados à sua tese.',
+      'Escolha segmentos de interesse e explore startups em tração.',
       'Envie propostas e acompanhe: pendente, aceita ou recusada.',
     ],
     cta: 'Cadastrar como investidor',
@@ -151,9 +150,9 @@ export const audiences = [
 ] as const
 
 export const faqs = [
-  { question: 'Quem pode se cadastrar?', answer: 'Startups (com CNPJ) e investidores (com CPF). Cada conta tem um único perfil: startup ou investidor.' },
+  { question: 'Quem pode se cadastrar?', answer: 'Startups com CNPJ e sinais reais de tração — como clientes, receita ou pilotos ativos — e investidores com CPF. Cada conta tem um único perfil.' },
   { question: 'O que é um match?', answer: 'Quando um investidor envia uma proposta a uma rodada, criamos um match entre os dois. A startup pode aceitar ou recusar.' },
-  { question: 'O que preciso para cadastrar minha startup?', answer: 'Nome, CNPJ, fase, segmento e uma breve descrição. Depois, abra sua rodada com meta, % de equity e período.' },
+  { question: 'O que preciso para cadastrar minha startup?', answer: 'Além de nome, CNPJ e segmento, informe ao menos um sinal mensurável de tração e descreva a principal evidência. Depois, apresente sua rodada com meta e equity.' },
   { question: 'Como informo quanto quero investir?', answer: 'No perfil de investidor você define o valor mínimo e o máximo e os segmentos de interesse.' },
 ] as const
 

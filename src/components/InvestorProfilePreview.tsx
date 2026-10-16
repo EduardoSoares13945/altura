@@ -3,16 +3,18 @@ import { Check, Info } from 'lucide-react'
 import { SegmentIcon } from './SegmentIcon'
 
 interface InvestorProfilePreviewProps {
+  imagemPerfil: string
   nome: string
   tipo: string
-  ticketMin: number
-  ticketMax: number
   segmentos: string[]
+  cidade: string
+  estado: string
 }
 
-export function InvestorProfilePreview({ nome, tipo, ticketMin, ticketMax, segmentos }: InvestorProfilePreviewProps) {
+export function InvestorProfilePreview({ imagemPerfil, nome, tipo, segmentos, cidade, estado }: InvestorProfilePreviewProps) {
   const nomeExibido = nome.trim() || 'Nome do investidor'
   const tipoExibido = tipo || 'Tipo de investidor não selecionado'
+  const localizacaoExibida = [cidade.trim(), estado].filter(Boolean).join(', ')
   const segmentosExibidos = segmentos.length > 0 ? segmentos : ['Segmentos de interesse não selecionados']
 
   return (
@@ -20,16 +22,12 @@ export function InvestorProfilePreview({ nome, tipo, ticketMin, ticketMax, segme
       <div className="startup-profile-preview-card">
         <div className="startup-profile-preview-header">
           <div className="startup-profile-preview-logo">
-            <img src={investorImage} alt="" />
+            <img src={imagemPerfil || investorImage} alt={imagemPerfil ? `Foto de perfil de ${nomeExibido}` : ''} />
           </div>
           <div>
             <h3>{nomeExibido}</h3>
-            <p>{tipoExibido}</p>
+            <p>{tipoExibido}{localizacaoExibida && ` · ${localizacaoExibida}`}</p>
           </div>
-        </div>
-        <div className="startup-profile-preview-metrics">
-          <div><span>Ticket mínimo</span><strong>{formatarMoeda(ticketMin)}</strong></div>
-          <div><span>Ticket máximo</span><strong>{formatarMoeda(ticketMax)}</strong></div>
         </div>
         <div className="investor-profile-preview-segments">
           <span>Segmentos de interesse</span>
@@ -51,8 +49,4 @@ export function InvestorProfilePreview({ nome, tipo, ticketMin, ticketMax, segme
       <small>Prévia do perfil exibido para startups</small>
     </div>
   )
-}
-
-function formatarMoeda(valor: number) {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(valor)
 }

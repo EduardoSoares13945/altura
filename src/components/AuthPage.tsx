@@ -48,14 +48,27 @@ const initialValues: Record<AuthField, string> = {
   confirmPassword: '',
 }
 
+const testAccounts: Record<TipoUsuario, { email: string; password: string; description: string }> = {
+  startup: {
+    email: 'startup.teste@altura.com',
+    password: 'Altura@123',
+    description: 'Perfil completo com tração e rodada aberta.',
+  },
+  investidor: {
+    email: 'investidor.teste@altura.com',
+    password: 'Altura@123',
+    description: 'Perfil pronto para explorar startups.',
+  },
+}
+
 export function AuthPage({ mode, initialRole = 'startup' }: AuthPageProps) {
   const [role, setRole] = useState<TipoUsuario>(initialRole)
+  const [selectedTestAccount, setSelectedTestAccount] = useState<TipoUsuario | null>(null)
   const [visiblePasswords, setVisiblePasswords] = useState<Record<string, boolean>>({})
   const [values, setValues] = useState<Record<AuthField, string>>(initialValues)
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<AuthField, string>>>({})
   const [serverError, setServerError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [confirmationEmail, setConfirmationEmail] = useState('')
   const copy = mode === 'login' ? auth.login : auth.register
   const isRegister = mode === 'register'
 
@@ -69,7 +82,20 @@ export function AuthPage({ mode, initialRole = 'startup' }: AuthPageProps) {
 
   const updateField = (field: AuthField, value: string) => {
     setValues((current) => ({ ...current, [field]: value }))
+    setSelectedTestAccount(null)
     setFieldErrors((current) => ({ ...current, [field]: undefined }))
+    setServerError('')
+  }
+
+  const useTestAccount = (type: TipoUsuario) => {
+    const account = testAccounts[type]
+    setSelectedTestAccount(type)
+    setValues({
+      email: account.email,
+      password: account.password,
+      confirmPassword: '',
+    })
+    setFieldErrors({})
     setServerError('')
   }
 
@@ -106,40 +132,9 @@ export function AuthPage({ mode, initialRole = 'startup' }: AuthPageProps) {
         return
       }
 
-      if (isRegister && result.needsEmailConfirmation) {
-        setConfirmationEmail(values.email.trim())
-      }
     } finally {
       setLoading(false)
     }
-  }
-
-  if (confirmationEmail) {
-    return (
-      <main id="conteudo" className="auth-shell">
-        <section className="auth-panel" aria-labelledby="auth-title">
-          <div className="auth-card">
-            <div className="auth-top">
-              <Brand />
-              <div className="auth-top-actions">
-                <ThemeToggle />
-                <a className="auth-back" href="/login">
-                  <ArrowLeft size={17} aria-hidden="true" />
-                  Entrar
-                </a>
-              </div>
-            </div>
-            <p className="kicker">Confirme seu e-mail</p>
-            <h1 id="auth-title">Quase lá.</h1>
-            <p className="auth-description">
-              Enviamos um link de confirmação para <strong>{confirmationEmail}</strong>. Depois de confirmar, volte para entrar na Altura.
-            </p>
-            <a className="button button-navy auth-submit" href="/login">Ir para login</a>
-          </div>
-        </section>
-        <AuthAside />
-      </main>
-    )
   }
 
   return (
@@ -188,6 +183,40 @@ export function AuthPage({ mode, initialRole = 'startup' }: AuthPageProps) {
                   })}
                 </div>
               </fieldset>
+            )}
+
+            {!isRegister && (
+              <section className="test-account-panel" aria-labelledby="test-account-title">
+                <div className="test-account-heading">
+                  <strong id="test-account-title">Acesso de teste</strong>
+                  <small>Escolha um perfil para preencher o login.</small>
+                </div>
+
+                <div className="test-account-options">
+                  {(['startup', 'investidor'] as const).map((type) => {
+                    const selected = selectedTestAccount === type
+                    const account = testAccounts[type]
+                    const Icon = type === 'startup' ? Building2 : BadgeDollarSign
+
+                    return (
+                      <button
+                        className={`test-account-option ${selected ? 'is-selected' : ''}`}
+                        type="button"
+                        aria-pressed={selected}
+                        disabled={loading}
+                        key={type}
+                        onClick={() => useTestAccount(type)}
+                      >
+                        <Icon size={18} aria-hidden="true" />
+                        <span>
+                          <strong>{type === 'startup' ? 'Startup de teste' : 'Investidor de teste'}</strong>
+                          <small>{account.description}</small>
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </section>
             )}
 
             <div className="auth-fields">
