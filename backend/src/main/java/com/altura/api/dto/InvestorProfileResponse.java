@@ -1,6 +1,7 @@
 package com.altura.api.dto;
 
 import java.util.List;
+import java.math.BigDecimal;
 
 public record InvestorProfileResponse(
         String nome,
@@ -14,5 +15,7 @@ public record InvestorProfileResponse(
         String estado,
         Double latitude,
         Double longitude,
-        String imagemPerfil
+        String imagemPerfil,
+        BigDecimal ticketMin,
+        BigDecimal ticketMax
 ) {}

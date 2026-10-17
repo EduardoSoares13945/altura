@@ -6,7 +6,7 @@ import { AppLoader } from './AppLoader'
 
 export function ProtectedRoute({ route, children }: { route: Route; children: ReactNode }) {
   const { status } = useAuth()
-  const { navigate } = useNavigation()
+  const { isNavigating, navigate } = useNavigation()
   const isProtected = protectedPages.has(route.page)
   const isAuthRoute = route.page === 'login' || route.page === 'register'
 
@@ -16,8 +16,8 @@ export function ProtectedRoute({ route, children }: { route: Route; children: Re
   else if (status === 'ready' && (isAuthRoute || route.page === 'onboarding')) redirect = '/app'
 
   useEffect(() => {
-    if (status !== 'loading' && redirect) navigate(redirect, { replace: true })
-  }, [navigate, redirect, status])
+    if (status !== 'loading' && redirect && !isNavigating) navigate(redirect, { replace: true })
+  }, [isNavigating, navigate, redirect, status])
 
   if (status === 'loading') return <AppLoader />
   if (redirect) return <AppLoader message="Redirecionando com segurança..." />

@@ -32,7 +32,12 @@ public class JdbcNotificationRepository implements NotificationRepository {
     @Override
     public List<NotificationResponse> list(UUID userId, int limit) {
         return jdbc.query("""
-                select n.id, n.tipo, n.titulo, n.mensagem, n.ator_usuario_id,
+                select n.id, n.tipo,
+                       case when n.tipo = 'comentario' then coalesce(
+                           (select pc.postagem_id from public.postagem_comentario pc where pc.id = n.referencia_id),
+                           n.referencia_id
+                       ) else n.referencia_id end as referencia_id,
+                       n.titulo, n.mensagem, n.ator_usuario_id,
                        coalesce(s.nome, i.nome, u.nome) as ator_nome,
                        u.tipo::text as ator_tipo,
                        coalesce(s.imagem_perfil, i.imagem_perfil) as ator_imagem,
@@ -45,7 +50,7 @@ public class JdbcNotificationRepository implements NotificationRepository {
                 order by n.created_at desc, n.id desc
                 limit ?
                 """, (result, row) -> new NotificationResponse(
-                result.getLong("id"), result.getString("tipo"), result.getString("titulo"),
+                result.getLong("id"), result.getString("tipo"), result.getLong("referencia_id"), result.getString("titulo"),
                 result.getString("mensagem"), result.getObject("ator_usuario_id", UUID.class),
                 result.getString("ator_nome"), result.getString("ator_tipo"),
                 result.getString("ator_imagem"), result.getString("destino"),

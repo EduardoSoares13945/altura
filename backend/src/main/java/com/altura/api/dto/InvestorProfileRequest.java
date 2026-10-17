@@ -7,6 +7,7 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 import java.util.List;
+import java.math.BigDecimal;
 
 public record InvestorProfileRequest(
         @NotBlank @Size(min = 2, max = 100) String nome,
@@ -20,7 +21,9 @@ public record InvestorProfileRequest(
         @NotBlank @Pattern(regexp = "AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO") String estado,
         Double latitude,
         Double longitude,
-        @Size(max = 500000) String imagemPerfil
+        @Size(max = 500000) String imagemPerfil,
+        BigDecimal ticketMin,
+        BigDecimal ticketMax
 ) {
     public InvestorProfileRequest {
         segmentos = segmentos == null ? List.of() : List.copyOf(segmentos);

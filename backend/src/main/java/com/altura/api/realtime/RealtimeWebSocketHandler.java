@@ -54,6 +54,10 @@ public class RealtimeWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
+    public void broadcast(RealtimeEvent event) {
+        for (UUID userId : sessions.keySet()) send(userId, event);
+    }
+
     private void sendIfOpen(WebSocketSession session, TextMessage payload) {
         if (!session.isOpen()) return;
         try {

@@ -1,6 +1,7 @@
 package com.altura.api.controller;
 
 import com.altura.api.dto.ConnectionResponse;
+import com.altura.api.dto.CreateHelloConnectionRequest;
 import com.altura.api.dto.CreateConnectionRequest;
 import com.altura.api.dto.MessageResponse;
 import com.altura.api.dto.SendMessageRequest;
@@ -43,6 +44,14 @@ public class ConnectionController {
     ResponseEntity<ConnectionResponse> create(@AuthenticationPrincipal Jwt jwt,
                                               @Valid @RequestBody CreateConnectionRequest request) {
         ConnectionResponse connection = service.create(subject(jwt), request);
+        return ResponseEntity.created(URI.create("/api/connections/" + connection.id()))
+                .body(connection);
+    }
+
+    @PostMapping("/hello")
+    ResponseEntity<ConnectionResponse> createHello(@AuthenticationPrincipal Jwt jwt,
+                                                    @Valid @RequestBody CreateHelloConnectionRequest request) {
+        ConnectionResponse connection = service.createHello(subject(jwt), request);
         return ResponseEntity.created(URI.create("/api/connections/" + connection.id()))
                 .body(connection);
     }

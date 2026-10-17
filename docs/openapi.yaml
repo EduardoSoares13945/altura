@@ -124,6 +124,86 @@ paths:
       responses:
         '200': {description: Rodadas abertas}
         '403': {description: Disponível somente para investidores}
+  /api/rounds/mine:
+    get:
+      summary: Lista o histórico de rodadas da startup autenticada
+      responses:
+        '200': {description: Rodadas da startup}
+        '403': {description: Disponível somente para startups}
+  /api/rounds:
+    post:
+      summary: Cria uma nova rodada para a startup autenticada
+      responses:
+        '201': {description: Rodada criada}
+        '400': {description: Dados da rodada inválidos}
+  /api/rounds/{roundId}:
+    put:
+      summary: Edita uma rodada aberta da startup autenticada
+      parameters:
+        - in: path
+          name: roundId
+          required: true
+          schema: {type: integer, format: int64}
+      responses:
+        '200': {description: Rodada atualizada}
+        '409': {description: Rodada fechada ou meta inferior ao valor captado}
+  /api/rounds/{roundId}/status:
+    patch:
+      summary: Abre, encerra ou cancela uma rodada da startup autenticada
+      parameters:
+        - in: path
+          name: roundId
+          required: true
+          schema: {type: integer, format: int64}
+      responses:
+        '200': {description: Status atualizado}
+        '409': {description: Uma rodada com investimento aceito não pode ser cancelada}
+  /api/dashboard/summary:
+    get:
+      summary: Retorna os indicadores reais do painel do usuário autenticado
+      responses:
+        '200': {description: Quantidade e valor consolidados por papel}
+  /api/connections/{connectionId}/proposals:
+    get:
+      summary: Lista o histórico de propostas de uma conexão
+      parameters:
+        - in: path
+          name: connectionId
+          required: true
+          schema: {type: integer, format: int64}
+      responses:
+        '200': {description: Histórico de propostas}
+    post:
+      summary: Envia uma proposta ou contraproposta em uma conexão aceita
+      parameters:
+        - in: path
+          name: connectionId
+          required: true
+          schema: {type: integer, format: int64}
+      responses:
+        '201': {description: Proposta criada}
+        '409': {description: Já existe proposta pendente do mesmo autor}
+  /api/proposals/{proposalId}/status:
+    patch:
+      summary: Aceita ou recusa uma proposta pendente
+      parameters:
+        - in: path
+          name: proposalId
+          required: true
+          schema: {type: integer, format: int64}
+      responses:
+        '200': {description: Proposta respondida}
+        '409': {description: Proposta já respondida ou acima do saldo da rodada}
+  /api/proposals/{proposalId}:
+    delete:
+      summary: Cancela uma proposta pendente enviada pelo usuário autenticado
+      parameters:
+        - in: path
+          name: proposalId
+          required: true
+          schema: {type: integer, format: int64}
+      responses:
+        '204': {description: Proposta cancelada}
   /api/feed:
     get:
       summary: Lista as publicações mais recentes da rede

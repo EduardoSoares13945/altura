@@ -28,4 +28,14 @@ public class RealtimeService {
         }
         handler.send(recipientId, event);
     }
+
+    public void broadcastAfterCommit(RealtimeEvent event) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override public void afterCommit() { handler.broadcast(event); }
+            });
+            return;
+        }
+        handler.broadcast(event);
+    }
 }

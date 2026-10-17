@@ -1,4 +1,4 @@
-import { ArrowRight, BarChart3, Info, TrendingUp, Users } from 'lucide-react'
+import { ArrowRight, BarChart3, DollarSign, Info, TrendingUp, Users } from 'lucide-react'
 import genericStartupImage from '../assets/generic_Startup.png'
 import { SegmentIcon } from './SegmentIcon'
 
@@ -58,7 +58,7 @@ export function StartupProfilePreview({
 
   return (
     <div className="startup-profile-preview">
-      <div className="startup-profile-preview-card">
+      <div className="startup-profile-preview-card rodada-preview-card">
         <div className="startup-profile-preview-header">
           <div className="startup-profile-preview-logo">
             <img src={imagemPerfil || genericStartupImage} alt={imagemPerfil ? `Imagem de perfil da ${nome}` : ''} />
@@ -87,7 +87,8 @@ export function StartupProfilePreview({
           </div>
           {temTracao ? (
             <div className="startup-profile-preview-traction-grid">
-              <div><BarChart3 size={15} aria-hidden="true" /><span>{receitaRecorrente && receitaRecorrente > 0 ? 'MRR' : 'Receita/mês'}</span><strong>{formatarMoeda(receitaRecorrente && receitaRecorrente > 0 ? receitaRecorrente : receita ?? 0)}</strong></div>
+              <div><DollarSign size={15} aria-hidden="true" /><span>Receita no mês</span><strong>{receita === null ? 'Não informado' : formatarMoeda(receita)}</strong></div>
+              <div><BarChart3 size={15} aria-hidden="true" /><span>MRR</span><strong>{receitaRecorrente === null ? 'Não informado' : formatarMoeda(receitaRecorrente)}</strong></div>
               <div><Users size={15} aria-hidden="true" /><span>{clientes && clientes > 0 ? 'Clientes' : 'Pilotos'}</span><strong>{formatarQuantidade(clientes && clientes > 0 ? clientes : pilotos ?? 0)}</strong></div>
               <div><TrendingUp size={15} aria-hidden="true" /><span>Crescimento</span><strong>{crescimento !== null && Number.isFinite(crescimento) ? `${crescimento}%` : 'Não informado'}</strong></div>
             </div>
@@ -101,7 +102,7 @@ export function StartupProfilePreview({
         </div>
         <div className="startup-profile-preview-actions">
           <button className="button button-navy button-compact" type="button" disabled>
-            Fazer proposta
+            Tenho interesse
             <ArrowRight size={16} aria-hidden="true" />
           </button>
           <button className="button button-outline button-compact" type="button" disabled>

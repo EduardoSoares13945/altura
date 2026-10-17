@@ -23,7 +23,7 @@ export const navItems = [
 ] as const
 
 export const hero = {
-  title: 'Tração real encontra capital inteligente.',
+  title: 'Grandes ideias merecem chegar mais alto',
   description: 'A Altura conecta startups que já validaram seu mercado a investidores em busca de oportunidades consistentes, com métricas recentes, rodadas claras e contexto para decidir.',
   actions: [
     { label: 'Sou startup', helper: 'Abra uma rodada de captação', href: '/cadastro/startup', type: 'startup' as TipoUsuario },
@@ -67,7 +67,7 @@ export const auth = {
   sidePanel: {
     eyebrow: 'Altura',
     title: 'Uma entrada para dois fluxos de crescimento.',
-    description: 'O mesmo padrão da landing segue aqui: interface clara, dados organizados e foco em aproximar bons projetos de capital inteligente.',
+    description: 'Tenha uma visão clara de projetos, rodadas e conexões que podem gerar novas oportunidades.',
     stats: [
       { label: 'Perfis', value: '2' },
       { label: 'Segmentos', value: '10+' },
@@ -101,6 +101,15 @@ export const captacaoExemplo: Captacao = {
   data_inicio: '2026-09-01',
   data_fim: null,
 }
+
+export const tracaoExemplo = {
+  mrr: 72000,
+  receitaMensal: 85000,
+  clientesAtivos: 68,
+  crescimentoMensal: 18.5,
+  evidencia: 'A base cresceu de 40 para 68 clientes pagantes nos últimos três meses.',
+  localizacao: 'São Paulo · SP',
+} as const
 
 export const steps = [
   {

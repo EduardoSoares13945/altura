@@ -13,6 +13,7 @@ public record OpenRoundResponse(
         BigDecimal percentualEquityOferecido,
         String status,
         LocalDate dataInicio,
+        MatchScoreResponse match,
         StartupData startup
 ) {
     public record StartupData(

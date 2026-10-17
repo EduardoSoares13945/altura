@@ -8,8 +8,9 @@ export type Route =
   | { page: 'app' }
   | { page: 'edit-profile' }
   | { page: 'explorar-rodadas' }
+  | { page: 'manage-rounds' }
   | { page: 'feed' }
-  | { page: 'startup-profile'; userId: string }
+  | { page: 'startup-profile'; userId: string; postId?: number }
   | { page: 'conversations' }
 
 export const protectedPages = new Set<Route['page']>([
@@ -17,6 +18,7 @@ export const protectedPages = new Set<Route['page']>([
   'app',
   'edit-profile',
   'explorar-rodadas',
+  'manage-rounds',
   'feed',
   'startup-profile',
   'conversations',
@@ -34,20 +36,24 @@ export function parseRoute(pathname = window.location.pathname, search = window.
   if (pathname === '/app') return { page: 'app' }
   if (pathname === '/editar-perfil') return { page: 'edit-profile' }
   if (pathname === '/explorar-rodadas') return { page: 'explorar-rodadas' }
+  if (pathname === '/rodadas') return { page: 'manage-rounds' }
   if (pathname === '/feed') return { page: 'feed' }
   if (pathname === '/conversas') return { page: 'conversations' }
   const startupProfileMatch = pathname.match(/^\/startups\/([^/]+)$/)
-  if (startupProfileMatch) return { page: 'startup-profile', userId: decodeURIComponent(startupProfileMatch[1]) }
+  if (startupProfileMatch) {
+    const post = Number(new URLSearchParams(search).get('post'))
+    return { page: 'startup-profile', userId: decodeURIComponent(startupProfileMatch[1]), ...(Number.isInteger(post) && post > 0 ? { postId: post } : {}) }
+  }
   return { page: 'home' }
 }
 
 export function isKnownAppUrl(url: URL) {
   return [
     '/', '/login', '/cadastro', '/cadastro/startup', '/cadastro/investidor',
-    '/onboarding', '/app', '/editar-perfil', '/explorar-rodadas', '/feed', '/conversas',
+    '/onboarding', '/app', '/editar-perfil', '/explorar-rodadas', '/rodadas', '/feed', '/conversas',
   ].includes(url.pathname) || /^\/startups\/[^/]+$/.test(url.pathname)
 }
 
 export function routeKey(route: Route) {
-  return route.page === 'startup-profile' ? `${route.page}:${route.userId}` : route.page
+  return route.page === 'startup-profile' ? `${route.page}:${route.userId}:${route.postId ?? ''}` : route.page
 }

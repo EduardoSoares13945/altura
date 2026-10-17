@@ -5,6 +5,7 @@ import { useAuth } from '../auth/useAuth'
 import { excluirPerfilInvestidor, excluirPerfilStartup } from '../lib/perfilApi'
 import { traduzirErroApi } from '../lib/apiErrors'
 import { limparRascunho } from '../utils/perfilDraft'
+import { useErrorToast } from './ToastProvider'
 
 interface ExcluirPerfilButtonProps {
   /** Chamado após a exclusão do perfil com sucesso (leva o usuário ao /onboarding). */
@@ -22,6 +23,7 @@ export function ExcluirPerfilButton({ onExcluido }: ExcluirPerfilButtonProps) {
   const [confirmado, setConfirmado] = useState(false)
   const [excluindo, setExcluindo] = useState(false)
   const [erro, setErro] = useState('')
+  useErrorToast(erro)
 
   const fechar = () => {
     if (excluindo) return
@@ -115,7 +117,6 @@ export function ExcluirPerfilButton({ onExcluido }: ExcluirPerfilButtonProps) {
                 />
                 <span>Entendo que essa ação não pode ser desfeita.</span>
               </label>
-              {erro && <p className="form-alert" role="alert">{erro}</p>}
               <div className="confirm-modal-actions">
                 <button className="button button-outline button-compact" type="button" onClick={fechar} disabled={excluindo}>
                   Cancelar

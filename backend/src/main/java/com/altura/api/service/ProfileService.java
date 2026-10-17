@@ -30,10 +30,13 @@ public class ProfileService {
             "^data:image/(?:jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$");
     private final ProfileRepository repository;
     private final AuthRepository authRepository;
+    private final MatchCalculator matchCalculator;
 
-    public ProfileService(ProfileRepository repository, AuthRepository authRepository) {
+    public ProfileService(ProfileRepository repository, AuthRepository authRepository,
+                          MatchCalculator matchCalculator) {
         this.repository = repository;
         this.authRepository = authRepository;
+        this.matchCalculator = matchCalculator;
     }
 
     @Transactional(readOnly = true)
@@ -81,6 +84,11 @@ public class ProfileService {
     public InvestorProfileResponse saveInvestor(UUID userId, InvestorProfileRequest request) {
         requireType(userId, "investidor");
         validateProfileImage(request.imagemPerfil());
+        if (request.ticketMin() == null || request.ticketMax() == null
+                || request.ticketMin().signum() < 0 || request.ticketMax().signum() <= 0
+                || request.ticketMin().compareTo(request.ticketMax()) > 0) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Informe uma faixa de investimento válida.");
+        }
         authRepository.updateName(userId, request.nome());
         return repository.saveInvestor(userId, request);
     }
@@ -108,7 +116,13 @@ public class ProfileService {
     @Transactional(readOnly = true)
     public List<OpenRoundResponse> openRounds(UUID userId) {
         requireType(userId, "investidor");
-        return repository.listOpenRounds();
+        InvestorProfileResponse investor = repository.findInvestor(userId).orElseThrow(() ->
+                new ApiException(HttpStatus.NOT_FOUND, "Perfil de investidor ainda não cadastrado."));
+        List<SegmentResponse> catalog = repository.listSegments();
+        return repository.listOpenRounds().stream().map(round -> new OpenRoundResponse(
+                round.id(), round.startupId(), round.valorAlvo(), round.valorCaptado(),
+                round.percentualEquityOferecido(), round.status(), round.dataInicio(),
+                matchCalculator.calculate(round, investor, catalog), round.startup())).toList();
     }
 
     private void validateStartup(StartupProfileRequest request) {

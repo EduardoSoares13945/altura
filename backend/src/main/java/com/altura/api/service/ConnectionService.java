@@ -1,6 +1,7 @@
 package com.altura.api.service;
 
 import com.altura.api.dto.ConnectionResponse;
+import com.altura.api.dto.CreateHelloConnectionRequest;
 import com.altura.api.dto.CreateConnectionRequest;
 import com.altura.api.dto.MessageResponse;
 import com.altura.api.dto.SendMessageRequest;
@@ -59,18 +60,39 @@ public class ConnectionService {
         }
         ConnectionResponse connection = repository.create(userId, request);
         notificationService.notify(connection.contraparte().usuarioId(), userId, "conexao", connection.id(),
-                "Nova conexão", "demonstrou interesse na sua rodada.", "/conversas");
+                "Pedido de conexão", "demonstrou interesse na sua rodada.", "/conversas");
+        realtimeService.sendAfterCommit(connection.contraparte().usuarioId(),
+                RealtimeEvent.connectionChanged(connection.id()));
+        return connection;
+    }
+
+    @Transactional
+    public ConnectionResponse createHello(UUID userId, CreateHelloConnectionRequest request) {
+        AuthUser user = requireMember(userId);
+        if (!"startup".equals(user.type())) {
+            throw new ApiException(HttpStatus.FORBIDDEN,
+                    "Somente startups podem iniciar uma conexão com investidores.");
+        }
+        if (!repository.openRoundExistsForStartup(userId)) {
+            throw new ApiException(HttpStatus.CONFLICT,
+                    "Abra uma rodada de captação antes de iniciar uma conexão.");
+        }
+        if (repository.existsForStartupAndInvestor(userId, request.investorUserId())) {
+            throw new ApiException(HttpStatus.CONFLICT,
+                    "Você já enviou uma solicitação para este investidor.");
+        }
+        ConnectionResponse connection = repository.createHello(userId, request);
+        notificationService.notify(connection.contraparte().usuarioId(), userId, "conexao", connection.id(),
+                "Pedido de conexão", "demonstrou interesse em conversar.", "/conversas");
+        realtimeService.sendAfterCommit(connection.contraparte().usuarioId(),
+                RealtimeEvent.connectionChanged(connection.id()));
         return connection;
     }
 
     @Transactional
     public ConnectionResponse updateStatus(UUID userId, long connectionId,
                                            UpdateConnectionStatusRequest request) {
-        AuthUser user = requireMember(userId);
-        if (!"startup".equals(user.type())) {
-            throw new ApiException(HttpStatus.FORBIDDEN,
-                    "Somente a startup pode responder a esta conexão.");
-        }
+        requireMember(userId);
         ConnectionResponse connection = requireConnection(userId, connectionId);
         if (!"pendente".equals(connection.status())) {
             throw new ApiException(HttpStatus.CONFLICT, "Esta conexão já foi respondida.");
@@ -80,8 +102,18 @@ public class ConnectionService {
         }
         ConnectionResponse updated = requireConnection(userId, connectionId);
         String accepted = "aceito".equals(updated.status()) ? "aceitou" : "recusou";
+        if ("recusado".equals(updated.status())) {
+            UUID counterpartId = updated.contraparte().usuarioId();
+            repository.delete(connectionId, userId);
+            realtimeService.sendAfterCommit(counterpartId,
+                    RealtimeEvent.connectionDeleted(connectionId));
+        }
         notificationService.notify(updated.contraparte().usuarioId(), userId, "status_conexao", connectionId,
                 "Conexão atualizada", accepted + " sua solicitação de conexão.", "/conversas");
+        if (!"recusado".equals(updated.status())) {
+            realtimeService.sendAfterCommit(updated.contraparte().usuarioId(),
+                    RealtimeEvent.connectionChanged(connectionId));
+        }
         return updated;
     }
 
@@ -108,6 +140,10 @@ public class ConnectionService {
     public void delete(UUID userId, long connectionId) {
         requireMember(userId);
         ConnectionResponse connection = requireConnection(userId, connectionId);
+        if (repository.hasAcceptedProposal(connectionId)) {
+            throw new ApiException(HttpStatus.CONFLICT,
+                    "Uma conexão com investimento confirmado não pode ser excluída.");
+        }
         if (!repository.delete(connectionId, userId)) {
             throw new ApiException(HttpStatus.NOT_FOUND, "Conexão não encontrada.");
         }

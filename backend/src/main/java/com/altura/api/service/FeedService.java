@@ -94,7 +94,7 @@ public class FeedService {
         if (result.curtido()) {
             repository.authorId(postId).ifPresent(authorId -> notificationService.notify(
                     authorId, userId, "curtida", postId, "Nova curtida",
-                    "curtiu sua publicação.", "/feed"));
+                    "curtiu sua publicação.", "/startups/" + authorId + "?post=" + postId));
         }
         return result;
     }
@@ -105,8 +105,8 @@ public class FeedService {
         requirePost(postId);
         FeedCommentResponse comment = repository.addComment(userId, postId, request.conteudo());
         repository.authorId(postId).ifPresent(authorId -> notificationService.notify(
-                authorId, userId, "comentario", comment.id(), "Novo comentário",
-                "comentou na sua publicação.", "/feed"));
+                authorId, userId, "comentario", postId, "Novo comentário",
+                "comentou na sua publicação.", "/startups/" + authorId + "?post=" + postId));
         return comment;
     }
 

@@ -22,6 +22,7 @@ import { buscarLocalizacaoPorCoordenadas } from '../utils/localizacao'
 import { mesAtual } from '../utils/datas'
 import { Brand } from './Brand'
 import { DashboardNavMenu } from './DashboardNavMenu'
+import { useErrorToast } from './ToastProvider'
 import { ThemeToggle } from './ThemeToggle'
 import { RangeSlider } from './RangeSlider'
 import { StartupProfilePreview } from './StartupProfilePreview'
@@ -36,6 +37,7 @@ import {
   type StartupTractionValues,
 } from './TractionFields'
 import linkedinLogo from '../assets/svg/linkedin-svgrepo-com.svg'
+import { AppLoader } from './AppLoader'
 
 interface EditProfilePageProps {
   onCancel: () => void
@@ -60,6 +62,7 @@ const startupSchema = z.object({
   valorCaptado: z.coerce.number().min(0, 'Informe um valor captado válido.'),
   percentualEquityOferecido: z.coerce.number().positive('Informe o equity oferecido.').max(49.9, 'O equity não pode ultrapassar 49,9%.'),
   status: z.enum(['aberta', 'encerrada']),
+  dataFim: z.string(),
 }).and(startupTractionSchema).superRefine((data, context) => {
   if (!temSinalTracao(data)) {
     context.addIssue({ code: 'custom', path: ['clientesAtivos'], message: 'Informe ao menos um sinal real de tração: receita, MRR, clientes ou pilotos ativos.' })
@@ -79,7 +82,9 @@ const investidorSchema = z.object({
   localizacao: z.string().trim().max(120, 'Use no máximo 120 caracteres.'),
   cidade: z.string().trim().min(2, 'Informe a cidade.').max(100, 'Use no máximo 100 caracteres.'),
   estado: z.enum(estadosBrasil, { message: 'Selecione o estado.' }),
-})
+  ticketMin: z.number().min(0, 'O ticket mínimo não pode ser negativo.'),
+  ticketMax: z.number().positive('Informe um ticket máximo.'),
+}).refine((data) => data.ticketMin <= data.ticketMax, { path: ['ticketMax'], message: 'O ticket máximo deve ser maior ou igual ao mínimo.' })
 
 interface StartupValues extends StartupTractionValues {
   nomeResponsavel: string
@@ -93,6 +98,7 @@ interface StartupValues extends StartupTractionValues {
   valorCaptado: string
   percentualEquityOferecido: string
   status: string
+  dataFim: string
   dataFundacao: string
   siteUrl: string
   linkedinUrl: string
@@ -117,6 +123,8 @@ interface InvestidorValues {
   latitude: number | null
   longitude: number | null
   imagemPerfil: string
+  ticketMin: number
+  ticketMax: number
 }
 
 type StartupField = keyof StartupValues
@@ -134,6 +142,7 @@ const startupInitial: StartupValues = {
   valorCaptado: '',
   percentualEquityOferecido: '',
   status: '',
+  dataFim: '',
   dataFundacao: '',
   siteUrl: '',
   linkedinUrl: '',
@@ -159,6 +168,8 @@ const investidorInitial: InvestidorValues = {
   latitude: null,
   longitude: null,
   imagemPerfil: '',
+  ticketMin: 0,
+  ticketMax: 10000000,
 }
 
 export function EditProfilePage({ onCancel, onSave }: EditProfilePageProps) {
@@ -234,6 +245,7 @@ export function EditProfilePage({ onCancel, onSave }: EditProfilePageProps) {
             valorCaptado: data.rodada?.valorCaptado.toString() ?? '',
             percentualEquityOferecido: data.rodada?.percentualEquityOferecido.toString() ?? '',
             status: data.rodada?.status ?? 'aberta',
+            dataFim: data.rodada?.dataFim ?? '',
             mesReferencia: data.tracao?.mesReferencia ?? mesAtual(),
             receitaMensal: numberToInput(data.tracao?.receitaMensal),
             mrr: numberToInput(data.tracao?.mrr),
@@ -259,6 +271,8 @@ export function EditProfilePage({ onCancel, onSave }: EditProfilePageProps) {
             latitude: data.latitude,
             longitude: data.longitude,
             imagemPerfil: data.imagemPerfil ?? '',
+            ticketMin: data.ticketMin,
+            ticketMax: data.ticketMax,
           })
         }
       }
@@ -294,16 +308,7 @@ export function EditProfilePage({ onCancel, onSave }: EditProfilePageProps) {
   }
 
   if (loadingData) {
-    return (
-      <main id="conteudo" className="auth-shell">
-        <section className="auth-panel">
-          <div className="auth-card">
-            <Brand />
-            <p>Carregando dados...</p>
-          </div>
-        </section>
-      </main>
-    )
+    return <AppLoader message="Carregando dados do perfil..." />
   }
 
   const setStartupField = (field: StartupField, value: StartupValues[StartupField]) => {
@@ -394,6 +399,7 @@ export function EditProfilePage({ onCancel, onSave }: EditProfilePageProps) {
           valorCaptado: parsed.data.valorCaptado,
           percentualEquityOferecido: parsed.data.percentualEquityOferecido,
           status: parsed.data.status,
+          dataFim: parsed.data.dataFim || null,
         },
         tracao: temSinalTracao(parsed.data) && parsed.data.evidenciaTracao.trim().length >= 20 ? {
           mesReferencia: parsed.data.mesReferencia,
@@ -440,6 +446,8 @@ export function EditProfilePage({ onCancel, onSave }: EditProfilePageProps) {
         latitude: investidorValues.latitude,
         longitude: investidorValues.longitude,
         imagemPerfil: investidorValues.imagemPerfil || null,
+        ticketMin: parsed.data.ticketMin,
+        ticketMax: parsed.data.ticketMax,
       })
       await refresh()
       limparRascunho(user.id, 'investidor-edit')
@@ -584,6 +592,9 @@ export function EditProfilePage({ onCancel, onSave }: EditProfilePageProps) {
                 <Field label="Data de fundação" error={fieldErrors.dataFundacao}>
                   <input type="month" max={mesAtual()} value={startupValues.dataFundacao} onChange={(event) => setStartupField('dataFundacao', event.target.value)} />
                 </Field>
+                <Field label="Encerramento previsto (opcional)">
+                  <input type="date" min={new Date().toISOString().slice(0, 10)} value={startupValues.dataFim} onChange={(event) => setStartupField('dataFim', event.target.value)} />
+                </Field>
               </div>
               <Field label="Status da rodada" error={fieldErrors.status}>
                 <select value={startupValues.status} onChange={(event) => setStartupField('status', event.target.value)}>
@@ -656,6 +667,11 @@ export function EditProfilePage({ onCancel, onSave }: EditProfilePageProps) {
                 {selectedSegmentNames.length > 0 && <small>Selecionados: {selectedSegmentNames.join(', ')}</small>}
                 {fieldErrors.segmentos && <small className="form-error">{fieldErrors.segmentos}</small>}
               </fieldset>
+              <div className="investor-ticket-preference">
+                <RangeSlider min={0} max={10000000} step={50000} valueMin={investidorValues.ticketMin} valueMax={investidorValues.ticketMax} label="Faixa de investimento" onChange={(ticketMin, ticketMax) => { setInvestidorField('ticketMin', ticketMin); setInvestidorField('ticketMax', ticketMax) }} />
+                <small>Preferência privada usada apenas nos filtros e no cálculo de match.</small>
+                {fieldErrors.ticketMax && <small className="form-error">{fieldErrors.ticketMax}</small>}
+              </div>
               <SubmitArea loading={loading} error={serverError} />
             </form>
           )}
@@ -677,9 +693,9 @@ function Field({ label, error, children }: { label: ReactNode; error?: string; c
 }
 
 function SubmitArea({ loading, error }: { loading: boolean; error: string }) {
+  useErrorToast(error)
   return (
     <>
-      {error && <p className="form-alert" role="alert">{error}</p>}
       <button className="button button-navy auth-submit" type="submit" disabled={loading}>
         {loading ? 'Salvando...' : 'Salvar alterações'}
         <ArrowRight size={18} aria-hidden="true" />
@@ -735,9 +751,11 @@ function EditProfileAside({
               imagemPerfil={investidorValues.imagemPerfil}
               nome={investidorValues.nome}
               tipo={investidorValues.tipo}
+              biografia={investidorValues.biografia}
               segmentos={selectedSegmentNames}
               cidade={investidorValues.cidade}
               estado={investidorValues.estado}
+              linkedinUrl={investidorValues.linkedinUrl}
             />
           </>
         )}

@@ -128,7 +128,15 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
         && Boolean(url.hash)
       event.preventDefault()
       if (currentPageHashLink) {
-        window.history.pushState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`)
+        const nextUrl = `${url.pathname}${url.search}${url.hash}`
+        const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`
+        if (nextUrl !== currentUrl) {
+          saveCurrentScroll()
+          const nextIndex = currentIndex.current + 1
+          window.history.pushState({ alturaNavigation: { index: nextIndex, scrollY: 0 } } satisfies HistoryState, '', nextUrl)
+          currentIndex.current = nextIndex
+          setRouteUrl(nextUrl)
+        }
         document.querySelector(url.hash)?.scrollIntoView({ behavior: 'smooth' })
         return
       }
@@ -141,7 +149,7 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
       window.removeEventListener('popstate', onPopState)
       document.removeEventListener('click', onDocumentClick)
     }
-  }, [commitLocation, navigate])
+  }, [commitLocation, navigate, saveCurrentScroll])
 
   return <NavigationContext.Provider value={{ route, routeUrl, direction, isNavigating, isFetching, navigate }}>{children}</NavigationContext.Provider>
 }

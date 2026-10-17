@@ -5,6 +5,7 @@ export type ConnectionStatus = 'pendente' | 'aceito' | 'recusado'
 export interface ConnectionData {
   id: number
   status: ConnectionStatus
+  solicitanteUsuarioId: string
   valorProposto: number | null
   mensagemInicial: string
   criadoEm: string
@@ -34,6 +35,20 @@ export interface MessageData {
   lida: boolean
 }
 
+export type ProposalStatus = 'pendente' | 'aceita' | 'recusada' | 'cancelada' | 'substituida'
+
+export interface ProposalData {
+  id: number
+  connectionId: number
+  autorUsuarioId: string
+  autorNome: string
+  valor: number
+  mensagem: string | null
+  status: ProposalStatus
+  criadaEm: string
+  respondidaEm: string | null
+}
+
 export function carregarConexoes() {
   return apiRequest<ConnectionData[]>('/connections')
 }
@@ -42,6 +57,13 @@ export function criarConexao(input: { captacaoId: number; valorProposto: number 
   return apiRequest<ConnectionData>('/connections', {
     method: 'POST',
     body: JSON.stringify(input),
+  })
+}
+
+export function criarConexaoInicial(investorUserId: string, mensagem: string) {
+  return apiRequest<ConnectionData>('/connections/hello', {
+    method: 'POST',
+    body: JSON.stringify({ investorUserId, mensagem }),
   })
 }
 
@@ -66,3 +88,8 @@ export function enviarMensagem(connectionId: number, conteudo: string) {
 export function excluirConexao(connectionId: number) {
   return apiRequest<void>(`/connections/${connectionId}`, { method: 'DELETE' })
 }
+
+export const carregarPropostas = (connectionId: number) => apiRequest<ProposalData[]>(`/connections/${connectionId}/proposals`)
+export const criarProposta = (connectionId: number, valor: number, mensagem: string) => apiRequest<ProposalData>(`/connections/${connectionId}/proposals`, { method: 'POST', body: JSON.stringify({ valor, mensagem: mensagem.trim() || null }) })
+export const responderProposta = (proposalId: number, status: 'aceita' | 'recusada') => apiRequest<ProposalData>(`/proposals/${proposalId}/status`, { method: 'PATCH', body: JSON.stringify({ status }) })
+export const cancelarProposta = (proposalId: number) => apiRequest<void>(`/proposals/${proposalId}`, { method: 'DELETE' })

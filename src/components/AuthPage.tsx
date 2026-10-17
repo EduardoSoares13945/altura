@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, BadgeDollarSign, Building2, Eye, EyeOff, Lock, Mail } from 'lucide-react'
+import { ArrowLeft, ArrowRight, BadgeDollarSign, Building2, ChartNoAxesCombined, CircleCheck, Eye, EyeOff, Lock, Mail, MessageCircle } from 'lucide-react'
 import type { FormEvent } from 'react'
 import { useEffect, useState } from 'react'
 import { z } from 'zod'
@@ -6,6 +6,7 @@ import { signIn, signUp } from '../auth/authApi'
 import { auth, type TipoUsuario } from '../data/landing'
 import { Brand } from './Brand'
 import { ThemeToggle } from './ThemeToggle'
+import { useErrorToast } from './ToastProvider'
 
 type AuthMode = 'login' | 'register'
 
@@ -69,6 +70,7 @@ export function AuthPage({ mode, initialRole = 'startup' }: AuthPageProps) {
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<AuthField, string>>>({})
   const [serverError, setServerError] = useState('')
   const [loading, setLoading] = useState(false)
+  useErrorToast(serverError)
   const copy = mode === 'login' ? auth.login : auth.register
   const isRegister = mode === 'register'
 
@@ -260,7 +262,6 @@ export function AuthPage({ mode, initialRole = 'startup' }: AuthPageProps) {
               })}
             </div>
 
-            {serverError && <p className="form-alert" role="alert">{serverError}</p>}
 
             <button className="button button-navy auth-submit" type="submit" disabled={loading}>
               {loading ? 'Aguarde...' : submitLabel}
@@ -281,17 +282,27 @@ export function AuthPage({ mode, initialRole = 'startup' }: AuthPageProps) {
 }
 
 function AuthAside() {
+  const benefits = [
+    { icon: ChartNoAxesCombined, title: 'Perfis com contexto', description: 'Tração, segmento e momento da empresa em uma visão objetiva.' },
+    { icon: CircleCheck, title: 'Rodadas mais claras', description: 'Encontre oportunidades abertas e entenda o que cada projeto busca.' },
+    { icon: MessageCircle, title: 'Conexões que avançam', description: 'Transforme interesse em conversa e proposta no mesmo ambiente.' },
+  ]
+
   return (
     <aside className="auth-aside" aria-label="Resumo da proposta Altura">
       <div className="auth-aside-content">
         <p>{auth.sidePanel.eyebrow}</p>
         <h2>{auth.sidePanel.title}</h2>
         <span>{auth.sidePanel.description}</span>
-        <div className="auth-stats">
-          {auth.sidePanel.stats.map((stat) => (
-            <div key={stat.label}>
-              <strong>{stat.value}</strong>
-              <small>{stat.label}</small>
+        <div className="auth-benefits" aria-label="Benefícios da Altura">
+          <p className="auth-benefits-title">O que você encontra aqui</p>
+          {benefits.map(({ icon: Icon, title, description }) => (
+            <div className="auth-benefit" key={title}>
+              <span className="auth-benefit-icon"><Icon size={17} aria-hidden="true" /></span>
+              <span>
+                <strong>{title}</strong>
+                <small>{description}</small>
+              </span>
             </div>
           ))}
         </div>
