@@ -38,6 +38,11 @@ O frontend é uma SPA em **React 19 + TypeScript**; o **Spring Boot 3** cuida de
 - **Dashboard e perfil:** visão geral por papel, edição de perfil e prévia de como o perfil aparece para o outro lado.
 - **Exclusão de perfil:** diálogo com confirmação em duas etapas; remove o perfil (a conta de acesso permanece) e redireciona ao onboarding.
 - **Explorar rodadas (investidor):** listagem com filtros (nome, segmento, ticket, equity mínimo), cards de oportunidade e modal com detalhes e vídeo de pitch.
+- **Gestão de rodada (startup):** edição dos termos da única rodada criada no cadastro, encerramento, cancelamento, reabertura, prazo e histórico de propostas.
+- **Negociação de propostas:** proposta e contraproposta com histórico, aceite, recusa e cancelamento; o aceite atualiza automaticamente o valor captado.
+- **Match personalizado:** pontuação calculada no backend por segmentos, faixa de investimento, tração e localização, com explicação dos fatores.
+- **Indicadores reais:** os painéis usam rodadas, conexões e investimentos efetivamente registrados, sem números simulados.
+- **Atualização em tempo real:** mensagens, conexões, propostas, notificações e alterações de rodada são propagadas por WebSocket.
 - **Feed de tração:** publicações com categorias, métrica em destaque, imagem ou vídeo do YouTube, curtidas e comentários.
 
 ### Imagens do feed
@@ -85,9 +90,32 @@ flowchart TD
 | `/app` | Dashboard | Autenticado |
 | `/editar-perfil` | Editar perfil | Autenticado |
 | `/explorar-rodadas` | Explorar rodadas | Investidor |
+| `/rodadas` | Gestão e histórico de rodadas | Startup |
 | `/feed` | Feed de tração | Autenticado |
+| `/startups/:id` | Perfil público da startup | Autenticado |
+| `/conversas` | Conexões e conversas | Autenticado |
 
 Estados de autenticação: `loading` → `signedOut` → `needsProfile` → `ready`.
+
+### Navegação e carregamento
+
+A SPA usa a History API por meio do `NavigationProvider`, que é a única fonte de verdade para a rota atual. Links internos, chamadas a `navigate()`, voltar e avançar do navegador passam pelo mesmo fluxo. Durante uma troca, a tela atual permanece visível sob um indicador discreto; depois do carregamento, a nova página recebe uma transição curta, o foco vai para o conteúdo principal e a posição de rolagem é restaurada ao voltar.
+
+- `AppLoader`: splash inicial e fallback das telas carregadas sob demanda.
+- `RouteLoader`: progresso visual de navegação e requisições demoradas.
+- `PageTransition`: animação por direção e gerenciamento de foco.
+- `ProtectedRoute`: decisões centralizadas de acesso e redirecionamento.
+- `RouteErrorBoundary`: estado de erro recuperável, sem tela em branco.
+
+As páginas internas são separadas em chunks com `React.lazy`. O cliente HTTP registra automaticamente a atividade de rede, e a interface respeita `prefers-reduced-motion`. Navegações programáticas simultâneas são bloqueadas; eventos de voltar/avançar cancelam transições antigas para evitar condições de corrida.
+
+Para adicionar uma tela:
+
+1. Inclua o novo tipo de rota e sua leitura de URL em `src/navigation/routes.ts`.
+2. Se for privada, acrescente o nome da página a `protectedPages` no mesmo arquivo.
+3. Importe a página com `lazy()` e associe a rota em `src/App.tsx`.
+4. Navegue usando um link interno normal (`<a href="/rota">`) ou `navigate('/rota')` quando a ação não for um link.
+5. Mantenha estados de carregamento, erro e vazio específicos dos dados dentro da própria página; o indicador global já cobre as requisições feitas por `apiRequest`.
 
 ---
 
@@ -96,7 +124,7 @@ Estados de autenticação: `loading` → `signedOut` → `needsProfile` → `rea
 - **Frontend:** React 19, TypeScript, Vite 6, Tailwind CSS 4, Zod 4, lucide-react.
 - **Backend:** Java 17, Spring Boot 3, Spring Security, Spring JDBC, JWT, BCrypt.
 - **Banco:** PostgreSQL no Neon (acesso só pelo backend, via TLS).
-- **Schema:** `database/nexo_schema.sql`. Para notificações em banco existente, execute `database/20261016_notifications.sql` no Neon antes de reiniciar a API.
+- **Schema:** `database/altura_schema.sql`. Em banco existente, execute as migrations em ordem. Para esta etapa, aplique `database/20261017_rounds_proposals_realtime.sql` no Neon antes de reiniciar a API.
 
 ---
 
@@ -113,6 +141,7 @@ altura/
     ├── components/  # Páginas e componentes de UI
     ├── data/        # Dados e tipos
     ├── lib/         # Cliente HTTP e contratos da API
+    ├── navigation/  # Rotas, History API e atividade de carregamento
     ├── utils/       # Documentos, localização, vídeos, imagens
     └── App.tsx      # Roteamento (History API)
 ```

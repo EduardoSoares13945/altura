@@ -1,8 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="16" fill="#F8F8FC"/>
-  <path d="M18 17v30m2-28 22 22M20 45l18-17m2-1 8-12" fill="none" stroke="#5659E6" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="18" cy="15" r="8" fill="#5659E6"/>
-  <circle cx="18" cy="49" r="8" fill="#5659E6"/>
-  <circle cx="39" cy="29" r="9" fill="#5659E6"/>
-  <circle cx="49" cy="13" r="8" fill="#7668F5"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 144 118">
+  <defs>
+    <linearGradient id="altura-gradient" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#5A5CEB"/>
+      <stop offset="1" stop-color="#8A78FF"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#altura-gradient)" d="M3 110 62 4h21L45 110z"/>
+  <path fill="url(#altura-gradient)" d="m73 110 31-56 39 56h-38L94 92l-10 18z"/>
 </svg>

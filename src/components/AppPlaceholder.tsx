@@ -1,11 +1,12 @@
-import { Bell, Briefcase, CheckCheck, Heart, LogOut, Megaphone, MessageCircle, Settings, Trash2, TrendingUp, UserPlus, Users } from 'lucide-react'
+import { Bell, Briefcase, CheckCheck, Eye, Heart, LogOut, Megaphone, MessageCircle, Rocket, Settings, Trash2, TrendingUp, UserPlus, Users } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import genericInvestorImage from '../assets/generic_Investor.png'
 import genericStartupImage from '../assets/generic_Startup.png'
 import { signOut } from '../auth/authApi'
 import { useAuth } from '../auth/useAuth'
-import { carregarConexoes } from '../lib/connectionApi'
 import { carregarNotificacoes, contarNotificacoesNaoLidas, excluirTodasNotificacoes, marcarNotificacaoComoLida, marcarTodasNotificacoesComoLidas, type NotificationData } from '../lib/notificationApi'
+import { subscribeRealtime } from '../lib/realtime'
+import { carregarResumoDashboard, type DashboardSummaryData } from '../lib/roundApi'
 import { Brand } from './Brand'
 import { DashboardNavMenu } from './DashboardNavMenu'
 import { ExcluirPerfilButton } from './ExcluirPerfil'
@@ -22,7 +23,7 @@ export function AppPlaceholder({ onExcluido }: AppPlaceholderProps) {
   const [notifications, setNotifications] = useState<NotificationData[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [notificationsLoading, setNotificationsLoading] = useState(true)
-  const [acceptedConnections, setAcceptedConnections] = useState(0)
+  const [summary, setSummary] = useState<DashboardSummaryData | null>(null)
 
   const refreshNotifications = useCallback(async (silent = false) => {
     if (!silent) setNotificationsLoading(true)
@@ -40,24 +41,26 @@ export function AppPlaceholder({ onExcluido }: AppPlaceholderProps) {
     }
   }, [])
 
-  const refreshConnections = useCallback(async () => {
-    try {
-      const connections = await carregarConexoes()
-      setAcceptedConnections(connections.filter((connection) => connection.status === 'aceito').length)
-    } catch {
-      // Mantém o último total conhecido caso a API fique temporariamente indisponível.
-    }
+  const refreshSummary = useCallback(async () => {
+    try { setSummary(await carregarResumoDashboard()) }
+    catch { /* Mantém o último resumo conhecido durante indisponibilidades breves. */ }
   }, [])
 
   useEffect(() => {
     void refreshNotifications()
-    void refreshConnections()
+    void refreshSummary()
     const intervalId = window.setInterval(() => {
       void refreshNotifications(true)
-      void refreshConnections()
-    }, 20000)
+      void refreshSummary()
+    }, 60000)
     return () => window.clearInterval(intervalId)
-  }, [refreshConnections, refreshNotifications])
+  }, [refreshNotifications, refreshSummary])
+
+  useEffect(() => subscribeRealtime((event) => {
+    if (event.type === 'notification.changed') void refreshNotifications(true)
+    if (event.type === 'connection.changed' || event.type === 'connection.deleted'
+      || event.type === 'proposal.changed' || event.type === 'round.changed') void refreshSummary()
+  }), [refreshNotifications, refreshSummary])
 
   const markRead = (notification: NotificationData) => {
     if (notification.lida) return
@@ -132,7 +135,7 @@ export function AppPlaceholder({ onExcluido }: AppPlaceholderProps) {
               </div>
               <div className="stat-content">
                 <p className="stat-label">{isStartup ? 'Rodadas abertas' : 'Conexões'}</p>
-                <p className="stat-value">{isStartup ? 0 : acceptedConnections}</p>
+                <p className="stat-value">{summary?.quantidadePrincipal ?? 0}</p>
               </div>
             </div>
 
@@ -143,7 +146,7 @@ export function AppPlaceholder({ onExcluido }: AppPlaceholderProps) {
               <div className="stat-content">
                 <p className="stat-label">{isStartup ? 'Valor captado' : 'Investimentos'}</p>
                 <p className="stat-value">
-                  R$ 0
+                  {formatarMoeda(summary?.valorTotal ?? 0)}
                 </p>
               </div>
             </div>
@@ -170,7 +173,7 @@ export function AppPlaceholder({ onExcluido }: AppPlaceholderProps) {
               <button className="button button-ghost button-compact notification-clear" type="button" onClick={() => void clearNotifications()}><Trash2 size={17} />Limpar lista</button>
             </div>}
           </div>
-          <NotificationCenter notifications={notifications} loading={notificationsLoading} onRead={markRead} />
+          <NotificationCenter notifications={notifications} loading={notificationsLoading} onRead={markRead} startupUserId={isStartup ? usuario?.id : undefined} />
         </section>
 
         <section className="dashboard-section">
@@ -178,12 +181,12 @@ export function AppPlaceholder({ onExcluido }: AppPlaceholderProps) {
             <h2>Ações rápidas</h2>
             <p className="section-description">
               {isStartup
-                ? 'Gerencie seu perfil e inicie novas rodadas.'
+                ? 'Gerencie seu perfil e veja como ele aparece para investidores.'
                 : 'Gerencie seu perfil e descubra novas oportunidades.'}
             </p>
           </div>
 
-          <div className="quick-actions">
+          <div className={`quick-actions ${isStartup ? 'quick-actions--startup' : 'quick-actions--investor'}`}>
             <a className="quick-action-card" href="/feed">
               <div className="quick-action-icon">
                 <Megaphone size={24} aria-hidden="true" />
@@ -214,6 +217,21 @@ export function AppPlaceholder({ onExcluido }: AppPlaceholderProps) {
               </div>
             </a>}
 
+            {isStartup && usuario && <a className="quick-action-card" href={`/startups/${encodeURIComponent(usuario.id)}`}>
+              <div className="quick-action-icon">
+                <Eye size={24} aria-hidden="true" />
+              </div>
+              <div className="quick-action-content">
+                <h3>Ver perfil</h3>
+                <p>Confira sua apresentação pública</p>
+              </div>
+            </a>}
+
+            {isStartup && <a className="quick-action-card" href="/rodadas">
+              <div className="quick-action-icon"><Rocket size={24} aria-hidden="true" /></div>
+              <div className="quick-action-content"><h3>Gerenciar rodada</h3><p>Abra, edite e acompanhe captações</p></div>
+            </a>}
+
             <a className="quick-action-card" href="/editar-perfil">
               <div className="quick-action-icon">
                 <Settings size={24} aria-hidden="true" />
@@ -223,18 +241,6 @@ export function AppPlaceholder({ onExcluido }: AppPlaceholderProps) {
                 <p>Atualize suas informações</p>
               </div>
             </a>
-
-            {isStartup && (
-              <div className="quick-action-card quick-action-disabled">
-                <div className="quick-action-icon">
-                  <Briefcase size={24} aria-hidden="true" />
-                </div>
-                <div className="quick-action-content">
-                  <h3>Nova rodada</h3>
-                  <p>Em breve</p>
-                </div>
-              </div>
-            )}
           </div>
         </section>
       </div>
@@ -242,7 +248,7 @@ export function AppPlaceholder({ onExcluido }: AppPlaceholderProps) {
   )
 }
 
-function NotificationCenter({ notifications, loading, onRead }: { notifications: NotificationData[]; loading: boolean; onRead: (notification: NotificationData) => void }) {
+function NotificationCenter({ notifications, loading, onRead, startupUserId }: { notifications: NotificationData[]; loading: boolean; onRead: (notification: NotificationData) => void; startupUserId?: string }) {
   if (loading) return <div className="activity-placeholder notification-empty"><div className="activity-empty"><div className="activity-icon"><Bell size={42} /></div><h3>Carregando notificações</h3><p>Buscando as interações mais recentes.</p></div></div>
   if (notifications.length === 0) return <div className="activity-placeholder notification-empty"><div className="activity-empty"><div className="activity-icon"><Bell size={42} /></div><h3>Nenhuma notificação ainda</h3><p>Novas conexões, mensagens, curtidas e comentários aparecerão aqui.</p></div></div>
 
@@ -251,7 +257,7 @@ function NotificationCenter({ notifications, loading, onRead }: { notifications:
       const fallback = notification.atorTipo === 'investidor' ? genericInvestorImage : genericStartupImage
       return <a
         className={`notification-item${notification.lida ? '' : ' is-unread'}`}
-        href={notification.destino}
+        href={notificationDestination(notification, startupUserId)}
         key={notification.id}
         onClick={() => onRead(notification)}
       >
@@ -261,6 +267,13 @@ function NotificationCenter({ notifications, loading, onRead }: { notifications:
       </a>
     })}
   </div>
+}
+
+function notificationDestination(notification: NotificationData, startupUserId?: string) {
+  if ((notification.tipo === 'curtida' || notification.tipo === 'comentario') && startupUserId) {
+    return `/startups/${encodeURIComponent(startupUserId)}?post=${notification.referenciaId}`
+  }
+  return notification.destino
 }
 
 function NotificationTypeIcon({ type }: { type: NotificationData['tipo'] }) {
@@ -276,4 +289,8 @@ function relativeTime(value: string) {
   const units: Array<[Intl.RelativeTimeFormatUnit, number]> = [['year', 31536000], ['month', 2592000], ['week', 604800], ['day', 86400], ['hour', 3600], ['minute', 60]]
   for (const [unit, size] of units) if (Math.abs(seconds) >= size) return formatter.format(Math.round(seconds / size), unit)
   return 'agora'
+}
+
+function formatarMoeda(value: number) {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(value)
 }

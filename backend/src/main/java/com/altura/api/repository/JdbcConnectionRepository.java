@@ -1,6 +1,7 @@
 package com.altura.api.repository;
 
 import com.altura.api.dto.ConnectionResponse;
+import com.altura.api.dto.CreateHelloConnectionRequest;
 import com.altura.api.dto.CreateConnectionRequest;
 import com.altura.api.dto.MessageResponse;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -15,7 +16,8 @@ import java.util.UUID;
 @Repository
 public class JdbcConnectionRepository implements ConnectionRepository {
     private static final String CONNECTION_SELECT = """
-            select m.id, m.status::text as status, m.valor_proposto, m.mensagem_inicial,
+            select m.id, m.status::text as status, m.solicitante_usuario_id,
+                   m.valor_proposto, m.mensagem_inicial,
                    m.created_at, m.updated_at, c.id as captacao_id,
                    s.id as startup_id, s.nome as startup_nome,
                    su.id as startup_usuario_id, iu.id as investidor_usuario_id,
@@ -76,18 +78,65 @@ public class JdbcConnectionRepository implements ConnectionRepository {
     }
 
     @Override
+    public boolean existsForStartupAndInvestor(UUID startupUserId, UUID investorUserId) {
+        Integer count = jdbc.queryForObject("""
+                select count(*)
+                from public.match m
+                join public.captacao c on c.id = m.captacao_id
+                join public.startup s on s.id = c.startup_id
+                join public.investidor i on i.id = m.investidor_id
+                where s.usuario_id = ? and i.usuario_id = ?
+                """, Integer.class, startupUserId, investorUserId);
+        return count != null && count > 0;
+    }
+
+    @Override
+    public boolean openRoundExistsForStartup(UUID startupUserId) {
+        Integer count = jdbc.queryForObject("""
+                select count(*)
+                from public.captacao c
+                join public.startup s on s.id = c.startup_id
+                where s.usuario_id = ? and c.status = 'aberta'
+                """, Integer.class, startupUserId);
+        return count != null && count > 0;
+    }
+
+    @Override
     public ConnectionResponse create(UUID investorUserId, CreateConnectionRequest request) {
         Long id = jdbc.queryForObject("""
-                insert into public.match (captacao_id, investidor_id, valor_proposto, mensagem_inicial)
-                select c.id, i.id, ?, ?
+                insert into public.match (captacao_id, investidor_id, solicitante_usuario_id, valor_proposto, mensagem_inicial)
+                select c.id, i.id, ?, ?, ?
                 from public.captacao c
                 cross join public.investidor i
                 where c.id = ? and c.status = 'aberta' and i.usuario_id = ?
                 returning id
-                """, Long.class, request.valorProposto(), request.mensagem().trim(),
+                """, Long.class, investorUserId, request.valorProposto(), request.mensagem().trim(),
                 request.captacaoId(), investorUserId);
         if (id == null) throw new IllegalStateException("Não foi possível criar a conexão.");
+        if (request.valorProposto() != null) {
+            jdbc.update("""
+                    insert into public.proposta (match_id, autor_usuario_id, valor, mensagem)
+                    values (?, ?, ?, ?)
+                    """, id, investorUserId, request.valorProposto(), request.mensagem().trim());
+        }
         return findById(investorUserId, id).orElseThrow();
+    }
+
+    @Override
+    public ConnectionResponse createHello(UUID startupUserId, CreateHelloConnectionRequest request) {
+        Long id = jdbc.queryForObject("""
+                insert into public.match (captacao_id, investidor_id, solicitante_usuario_id, valor_proposto, mensagem_inicial)
+                select c.id, i.id, ?, null, ?
+                from public.captacao c
+                join public.startup s on s.id = c.startup_id
+                cross join public.investidor i
+                where s.usuario_id = ? and c.status = 'aberta' and i.usuario_id = ?
+                order by c.id desc
+                limit 1
+                returning id
+                """, Long.class, startupUserId, request.mensagem().trim(), startupUserId, request.investorUserId());
+        if (id == null) throw new IllegalStateException("Não foi possível criar a conexão.");
+        return findById(startupUserId, id).orElseThrow();
     }
 
     @Override
@@ -95,11 +144,12 @@ public class JdbcConnectionRepository implements ConnectionRepository {
         return jdbc.update("""
                 update public.match m
                 set status = ?::public.status_match
-                from public.captacao c, public.startup s
+                from public.captacao c, public.startup s, public.investidor i
                 where m.id = ? and m.status = 'pendente'
-                  and c.id = m.captacao_id and s.id = c.startup_id
-                  and s.usuario_id = ?
-                """, status, connectionId, startupUserId) > 0;
+                  and c.id = m.captacao_id and s.id = c.startup_id and i.id = m.investidor_id
+                  and ((s.usuario_id = ? and m.solicitante_usuario_id = i.usuario_id)
+                    or (i.usuario_id = ? and m.solicitante_usuario_id = s.usuario_id))
+                """, status, connectionId, startupUserId, startupUserId) > 0;
     }
 
     @Override
@@ -141,6 +191,14 @@ public class JdbcConnectionRepository implements ConnectionRepository {
     }
 
     @Override
+    public boolean hasAcceptedProposal(long connectionId) {
+        Integer count = jdbc.queryForObject(
+                "select count(*) from public.proposta where match_id = ? and status = 'aceita'",
+                Integer.class, connectionId);
+        return count != null && count > 0;
+    }
+
+    @Override
     public boolean delete(long connectionId, UUID userId) {
         jdbc.update("""
                 delete from public.notificacao n
@@ -172,6 +230,7 @@ public class JdbcConnectionRepository implements ConnectionRepository {
         boolean viewerIsStartup = viewerId.equals(startupUserId);
         return new ConnectionResponse(
                 result.getLong("id"), result.getString("status"),
+                result.getObject("solicitante_usuario_id", UUID.class),
                 result.getBigDecimal("valor_proposto"), result.getString("mensagem_inicial"),
                 result.getTimestamp("created_at").toInstant(),
                 result.getTimestamp("updated_at").toInstant(), result.getInt("nao_lidas"),

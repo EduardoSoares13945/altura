@@ -22,6 +22,7 @@ export interface StartupRodadaInput {
   valorCaptado: number
   percentualEquityOferecido: number
   status: string
+  dataFim: string | null
 }
 
 export interface StartupPerfilInput {
@@ -61,6 +62,8 @@ export interface InvestidorPerfilInput {
   latitude?: number | null
   longitude?: number | null
   imagemPerfil?: string | null
+  ticketMin: number
+  ticketMax: number
 }
 
 export interface StartupRodadaData {
@@ -68,6 +71,7 @@ export interface StartupRodadaData {
   valorCaptado: number
   percentualEquityOferecido: number
   status: string
+  dataFim: string | null
 }
 
 export interface StartupPerfilData {
@@ -105,6 +109,8 @@ export interface InvestidorPerfilData {
   latitude: number | null
   longitude: number | null
   imagemPerfil: string | null
+  ticketMin: number
+  ticketMax: number
 }
 
 export interface InvestorDetailsData {
@@ -126,6 +132,7 @@ export interface RodadaDisponivelData {
   percentualEquityOferecido: number
   status: string
   dataInicio: string
+  match: MatchScoreData
   startup: {
     id: number
     usuarioId: string
@@ -144,6 +151,15 @@ export interface RodadaDisponivelData {
     segmentosSecundarios: string[]
     tracao: StartupTractionData | null
   }
+}
+
+export interface MatchScoreData {
+  percentual: number
+  segmentos: number
+  investimento: number
+  tracao: number
+  localizacao: number
+  motivos: Array<{ texto: string; positivo: boolean }>
 }
 
 export interface StartupDetailsData {

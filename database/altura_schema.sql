@@ -69,7 +69,7 @@ create table if not exists public.notificacao (
   created_at timestamptz not null default now(),
   constraint notificacao_usuarios_distintos check (usuario_id <> ator_usuario_id),
   constraint notificacao_tipo_valido check (
-    tipo in ('conexao', 'status_conexao', 'mensagem', 'curtida', 'comentario')
+    tipo in ('conexao', 'status_conexao', 'mensagem', 'curtida', 'comentario', 'proposta', 'rodada')
   ),
   constraint notificacao_destino_interno check (destino like '/%'),
   constraint notificacao_texto_preenchido check (
@@ -317,6 +317,8 @@ create table if not exists public.investidor (
   latitude double precision,
   longitude double precision,
   imagem_perfil text,
+  ticket_min numeric(15,2) not null default 0,
+  ticket_max numeric(15,2) not null default 10000000,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint investidor_nome_tamanho check (char_length(btrim(nome)) between 2 and 100),
@@ -334,6 +336,9 @@ create table if not exists public.investidor (
   constraint investidor_coordenadas_completas check (
     (latitude is null and longitude is null) or (latitude is not null and longitude is not null)
   ),
+  constraint investidor_ticket_min_nonnegative check (ticket_min >= 0),
+  constraint investidor_ticket_max_positive check (ticket_max > 0),
+  constraint investidor_ticket_range_valid check (ticket_min <= ticket_max),
   constraint investidor_imagem_perfil_valida check (
     imagem_perfil is null or (
       char_length(imagem_perfil) <= 500000
@@ -356,6 +361,7 @@ create table if not exists public.match (
   id bigint generated always as identity primary key,
   captacao_id bigint not null references public.captacao(id) on delete cascade,
   investidor_id bigint not null references public.investidor(id) on delete cascade,
+  solicitante_usuario_id uuid not null references public.usuario(id) on delete cascade,
   status public.status_match not null default 'pendente',
   valor_proposto numeric(15,2),
   mensagem_inicial varchar(500) not null,
@@ -375,6 +381,31 @@ create index if not exists match_investidor_idx
 
 create index if not exists match_status_idx
   on public.match (status);
+
+create table if not exists public.proposta (
+  id bigint generated always as identity primary key,
+  match_id bigint not null references public.match(id) on delete cascade,
+  autor_usuario_id uuid not null references public.usuario(id) on delete cascade,
+  valor numeric(15,2) not null,
+  mensagem varchar(500),
+  status varchar(20) not null default 'pendente',
+  respondida_em timestamptz,
+  created_at timestamptz not null default now(),
+  constraint proposta_valor_positivo check (valor > 0),
+  constraint proposta_mensagem_tamanho check (
+    mensagem is null or char_length(btrim(mensagem)) between 1 and 500
+  ),
+  constraint proposta_status_valido check (
+    status in ('pendente', 'aceita', 'recusada', 'cancelada', 'substituida')
+  )
+);
+
+create index if not exists proposta_match_data_idx
+  on public.proposta (match_id, created_at, id);
+
+create unique index if not exists proposta_match_pendente_unique_idx
+  on public.proposta (match_id)
+  where status = 'pendente';
 
 create table if not exists public.mensagem (
   id bigint generated always as identity primary key,

@@ -1,8 +1,9 @@
-import { ArrowRight, BarChart3, Globe, MapPin, TrendingUp, Users, X } from 'lucide-react'
+import { ArrowRight, BarChart3, DollarSign, Globe, MapPin, TrendingUp, Users, X } from 'lucide-react'
 import genericStartupImage from '../assets/generic_Startup.png'
 import linkedinLogo from '../assets/svg/linkedin-svgrepo-com.svg'
 import type { StartupRodadaData, StartupTractionData } from '../lib/perfilApi'
 import { SegmentIcon } from './SegmentIcon'
+import { ZoomableImage } from './ZoomableImage'
 
 export interface StartupDetailsView {
   id: number
@@ -41,7 +42,7 @@ export function StartupDetailsModal({
     <section className="details-modal" role="dialog" aria-modal="true" aria-labelledby="startup-details-title">
       <button className="details-modal-close" type="button" onClick={onClose} aria-label="Fechar detalhes"><X size={20} aria-hidden="true" /></button>
       <div className="details-modal-heading">
-        <div className="rodada-card-logo"><img src={startup.imagemPerfil || genericStartupImage} alt={startup.imagemPerfil ? `Imagem de perfil da ${startup.nomeStartup}` : ''} /></div>
+        <div className="rodada-card-logo"><ZoomableImage src={startup.imagemPerfil || genericStartupImage} alt={startup.imagemPerfil ? `Imagem de perfil da ${startup.nomeStartup}` : `Imagem padrão da ${startup.nomeStartup}`} /></div>
         <div><p className="kicker">{label}</p><h2 id="startup-details-title">{startup.nomeStartup}</h2><p>{startup.segmentoNome}</p></div>
       </div>
       {rodada && <div className="details-modal-progress">
@@ -72,10 +73,10 @@ function RodadaProgresso({ rodada }: { rodada: StartupRodadaData }) {
 }
 
 function TractionSummary({ tracao }: { tracao: StartupTractionData }) {
-  const valorReceita = tracao.mrr && tracao.mrr > 0 ? tracao.mrr : tracao.receitaMensal
   const volume = tracao.clientesAtivos && tracao.clientesAtivos > 0 ? tracao.clientesAtivos : tracao.pilotosAtivos
   return <div className="traction-summary">
-    <div><BarChart3 size={16} aria-hidden="true" /><span>{tracao.mrr && tracao.mrr > 0 ? 'MRR' : 'Receita/mês'}</span><strong>{valorReceita === null ? 'Não informado' : formatarMoeda(valorReceita)}</strong></div>
+    <div><DollarSign size={16} aria-hidden="true" /><span>Receita no mês</span><strong>{tracao.receitaMensal === null ? 'Não informado' : formatarMoeda(tracao.receitaMensal)}</strong></div>
+    <div><BarChart3 size={16} aria-hidden="true" /><span>MRR</span><strong>{tracao.mrr === null ? 'Não informado' : formatarMoeda(tracao.mrr)}</strong></div>
     <div><Users size={16} aria-hidden="true" /><span>{tracao.clientesAtivos && tracao.clientesAtivos > 0 ? 'Clientes' : 'Pilotos'}</span><strong>{volume === null ? 'Não informado' : new Intl.NumberFormat('pt-BR').format(volume)}</strong></div>
     <div><TrendingUp size={16} aria-hidden="true" /><span>Crescimento</span><strong>{tracao.crescimentoMensal === null ? 'Não informado' : `${tracao.crescimentoMensal}%`}</strong></div>
   </div>

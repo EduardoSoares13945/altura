@@ -1,10 +1,11 @@
 import { apiRequest } from './api'
 
-export type NotificationType = 'conexao' | 'status_conexao' | 'mensagem' | 'curtida' | 'comentario'
+export type NotificationType = 'conexao' | 'status_conexao' | 'mensagem' | 'curtida' | 'comentario' | 'proposta' | 'rodada'
 
 export interface NotificationData {
   id: number
   tipo: NotificationType
+  referenciaId: number
   titulo: string
   mensagem: string
   atorId: string

@@ -16,7 +16,7 @@ export function DashboardNavMenu() {
   const pathname = window.location.pathname
   const items = usuario?.tipo === 'investidor'
     ? [...commonItems.slice(0, 2), { href: '/explorar-rodadas', label: 'Explorar rodadas', icon: Rocket }, ...commonItems.slice(2)]
-    : commonItems
+    : [...commonItems.slice(0, 2), { href: '/rodadas', label: 'Gerenciar rodada', icon: Rocket }, ...commonItems.slice(2)]
 
   useEffect(() => {
     if (!open) return

@@ -1,9 +1,13 @@
 import { getApiBaseUrl, getSession } from '../auth/authApi'
-import type { MessageData } from './connectionApi'
+import type { MessageData, ProposalData } from './connectionApi'
 
 export type RealtimeEvent =
   | { type: 'message.created'; connectionId: number; message: MessageData }
   | { type: 'connection.deleted'; connectionId: number; message: null }
+  | { type: 'connection.changed'; connectionId: number; message: null }
+  | { type: 'proposal.changed'; connectionId: number; message: ProposalData | null }
+  | { type: 'notification.changed'; connectionId: 0; message: null }
+  | { type: 'round.changed'; connectionId: number; message: null }
 
 export function subscribeRealtime(listener: (event: RealtimeEvent) => void) {
   let stopped = false

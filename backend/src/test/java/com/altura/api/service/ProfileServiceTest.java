@@ -35,7 +35,7 @@ class ProfileServiceTest {
     @BeforeEach
     void setUp() {
         repository = new FakeProfileRepository();
-        service = new ProfileService(repository, new StartupAuthRepository(userId));
+        service = new ProfileService(repository, new StartupAuthRepository(userId), new MatchCalculator());
     }
 
     @Test
@@ -72,7 +72,7 @@ class ProfileServiceTest {
                 "Descrição válida da startup.", null, LocalDate.now().minusYears(2),
                 "https://example.com", null, null, "Recife", "PE", null, null, null,
                 new RoundRequest(new BigDecimal("500000"), BigDecimal.ZERO,
-                        new BigDecimal("10"), "aberta"), traction);
+                        new BigDecimal("10"), "aberta", null), traction);
     }
 
     private static final class FakeProfileRepository implements ProfileRepository {

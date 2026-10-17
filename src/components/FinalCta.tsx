@@ -1,10 +1,11 @@
 import { ArrowRight } from 'lucide-react'
+import logo from '../assets/logo.png'
 import { Reveal } from './Reveal'
 
 export function FinalCta() {
   return (
     <section className="final-cta" aria-labelledby="final-title">
-      <div className="final-network" aria-hidden="true" />
+      <img className="final-cta-watermark" src={logo} alt="" aria-hidden="true" />
       <Reveal className="container final-inner">
         <div>
           <p>Seu próximo match pode começar aqui.</p>

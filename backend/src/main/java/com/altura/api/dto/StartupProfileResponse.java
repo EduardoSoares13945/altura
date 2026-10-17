@@ -25,7 +25,7 @@ public record StartupProfileResponse(
         RoundData rodada,
         TractionData tracao
 ) {
-    public record RoundData(BigDecimal valorAlvo, BigDecimal valorCaptado, BigDecimal percentualEquityOferecido, String status) {}
+    public record RoundData(BigDecimal valorAlvo, BigDecimal valorCaptado, BigDecimal percentualEquityOferecido, String status, LocalDate dataFim) {}
     public record TractionData(String mesReferencia, BigDecimal receitaMensal, BigDecimal mrr, Integer clientesAtivos,
                                Integer pilotosAtivos, BigDecimal crescimentoMensal, String evidenciaTracao) {}
 }

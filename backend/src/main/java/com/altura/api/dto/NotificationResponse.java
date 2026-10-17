@@ -6,6 +6,7 @@ import java.util.UUID;
 public record NotificationResponse(
         long id,
         String tipo,
+        long referenciaId,
         String titulo,
         String mensagem,
         UUID atorId,

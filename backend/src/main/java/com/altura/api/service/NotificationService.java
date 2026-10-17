@@ -15,10 +15,13 @@ import java.util.UUID;
 public class NotificationService {
     private final NotificationRepository repository;
     private final AuthRepository authRepository;
+    private final RealtimeService realtimeService;
 
-    public NotificationService(NotificationRepository repository, AuthRepository authRepository) {
+    public NotificationService(NotificationRepository repository, AuthRepository authRepository,
+                               RealtimeService realtimeService) {
         this.repository = repository;
         this.authRepository = authRepository;
+        this.realtimeService = realtimeService;
     }
 
     @Transactional(readOnly = true)
@@ -56,6 +59,10 @@ public class NotificationService {
     public void notify(UUID recipientId, UUID actorId, String type, long referenceId,
                        String title, String message, String destination) {
         repository.create(recipientId, actorId, type, referenceId, title, message, destination);
+        if (!recipientId.equals(actorId)) {
+            realtimeService.sendAfterCommit(recipientId,
+                    com.altura.api.realtime.RealtimeEvent.notificationChanged());
+        }
     }
 
     private void requireActiveUser(UUID userId) {

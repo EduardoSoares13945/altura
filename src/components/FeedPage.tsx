@@ -30,6 +30,7 @@ import {
   type PostCategory,
 } from '../lib/feedApi'
 import { traduzirErroApi } from '../lib/apiErrors'
+import { useErrorToast } from './ToastProvider'
 import {
   carregarPerfilInvestidor,
   carregarPerfilStartup,
@@ -40,7 +41,9 @@ import { comprimirImagemFeed } from '../utils/imagemFeed'
 import { extrairIdYoutube } from '../utils/videos'
 import { Brand } from './Brand'
 import { DashboardNavMenu } from './DashboardNavMenu'
+import { InvestorDetailsModal } from './InvestorDetailsModal'
 import { ThemeToggle } from './ThemeToggle'
+import { ZoomableImage } from './ZoomableImage'
 
 interface FeedPageProps { onBack: () => void; onOpenStartup: (startupUserId: string) => void }
 
@@ -70,6 +73,7 @@ export function FeedPage({ onBack, onOpenStartup }: FeedPageProps) {
   const [publishing, setPublishing] = useState(false)
   const [actionError, setActionError] = useState('')
   const [openComments, setOpenComments] = useState<number | null>(null)
+  const [investorProfileUserId, setInvestorProfileUserId] = useState<string | null>(null)
   const [commentInputs, setCommentInputs] = useState<Record<number, string>>({})
   const [busyPost, setBusyPost] = useState<number | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -82,6 +86,9 @@ export function FeedPage({ onBack, onOpenStartup }: FeedPageProps) {
   const [mediaError, setMediaError] = useState('')
   const isInvestor = usuario?.tipo === 'investidor'
   const youtubeVideoId = useMemo(() => extrairIdYoutube(youtubeUrl), [youtubeUrl])
+  useErrorToast(actionError)
+  useErrorToast(mediaError)
+  useErrorToast(loadError)
 
   const visiblePosts = useMemo(() => {
     const query = normalizeSearch(searchQuery)
@@ -313,7 +320,6 @@ export function FeedPage({ onBack, onOpenStartup }: FeedPageProps) {
             <div><Youtube size={18} /><input id="feed-youtube-url" type="url" value={youtubeUrl} onChange={(event) => { setYoutubeUrl(event.target.value); setMediaError('') }} placeholder="https://www.youtube.com/watch?v=…" /></div>
             {youtubeUrl.trim() && !youtubeVideoId && <small>Use uma URL válida de youtube.com ou youtu.be.</small>}
           </div>}
-          {mediaError && <div className="feed-media-error" role="alert">{mediaError}</div>}
           <div className="feed-metric-fields">
             <label><span>Métrica em destaque <small>(opcional)</small></span><input maxLength={40} value={metricaRotulo} onChange={(event) => setMetricaRotulo(event.target.value)} placeholder="Ex.: MRR" /></label>
             <label><span>Valor <small>(opcional)</small></span><input maxLength={80} value={metricaValor} onChange={(event) => setMetricaValor(event.target.value)} placeholder="Ex.: R$ 120 mil · +18% MoM" /></label>
@@ -321,7 +327,6 @@ export function FeedPage({ onBack, onOpenStartup }: FeedPageProps) {
           <div className="feed-composer-footer"><span>{conteudo.length}/1500</span><button className="button button-navy button-compact" type="submit" disabled={!conteudo.trim() || publishing}>{publishing ? <LoaderCircle className="feed-spin" size={17} /> : <Send size={17} />}Publicar</button></div>
         </form>}
 
-        {actionError && <div className="feed-alert" role="alert">{actionError}</div>}
         {loading ? <FeedStatus icon={<LoaderCircle className="feed-spin" size={30} />} title="Carregando o feed" text="Buscando as atualizações mais recentes da rede." />
           : loadError ? <FeedStatus icon={<MessageCircle size={30} />} title="Não foi possível carregar o feed" text={loadError} />
           : posts.length === 0 ? <FeedStatus icon={<Megaphone size={30} />} title="Nenhuma atualização ainda" text="As publicações das startups em tração aparecerão aqui." />
@@ -334,7 +339,7 @@ export function FeedPage({ onBack, onOpenStartup }: FeedPageProps) {
             </header>
             <div className="feed-post-category">{categoryLabels[post.categoria]}</div>
             <p className="feed-post-content">{post.conteudo}</p>
-            {post.imagemUrl && <div className="feed-post-media"><img src={post.imagemUrl} alt={`Imagem publicada por ${post.autorNome}`} loading="lazy" /></div>}
+            {post.imagemUrl && <div className="feed-post-media"><ZoomableImage src={post.imagemUrl} alt={`Imagem publicada por ${post.autorNome}`} loading="lazy" /></div>}
             {post.youtubeVideoId && <div className="feed-post-media feed-post-video"><iframe src={`https://www.youtube-nocookie.com/embed/${post.youtubeVideoId}`} title={`Vídeo publicado por ${post.autorNome}`} loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /></div>}
             {post.metricaRotulo && post.metricaValor && <div className="feed-metric"><BarChart3 size={22} aria-hidden="true" /><div><span>{post.metricaRotulo}</span><strong>{post.metricaValor}</strong></div></div>}
             <div className="feed-post-stats"><span>{post.curtidas} curtida{post.curtidas === 1 ? '' : 's'}</span><span>{post.comentarios.length} comentário{post.comentarios.length === 1 ? '' : 's'}</span></div>
@@ -344,7 +349,14 @@ export function FeedPage({ onBack, onOpenStartup }: FeedPageProps) {
               {isInvestor && <button type="button" onClick={() => onOpenStartup(post.autorId)}><Building2 size={18} />Analisar perfil</button>}
             </div>
             {openComments === post.id && <div className="feed-comments">
-              {post.comentarios.length > 0 && <div className="feed-comments-list">{post.comentarios.map((comment) => <div className="feed-comment" key={comment.id}><Avatar nome={comment.autorNome} imagem={comment.autorImagem} tipo={comment.autorTipo} small /><div><p><strong>{comment.autorNome}</strong><span>{relativeTime(comment.criadoEm)}</span></p><div>{comment.conteudo}</div></div></div>)}</div>}
+              {post.comentarios.length > 0 && <div className="feed-comments-list">{post.comentarios.map((comment) => <div className="feed-comment" key={comment.id}>
+                {comment.autorTipo === 'startup'
+                  ? <a className="feed-comment-profile-avatar" href={`/startups/${encodeURIComponent(comment.autorId)}`} aria-label={`Ver perfil de ${comment.autorNome}`}><Avatar nome={comment.autorNome} imagem={comment.autorImagem} tipo={comment.autorTipo} small /></a>
+                  : <button className="feed-comment-profile-avatar" type="button" onClick={() => setInvestorProfileUserId(comment.autorId)} aria-label={`Ver perfil de ${comment.autorNome}`}><Avatar nome={comment.autorNome} imagem={comment.autorImagem} tipo={comment.autorTipo} small /></button>}
+                <div><p><strong>{comment.autorTipo === 'startup'
+                  ? <a className="feed-comment-profile-name" href={`/startups/${encodeURIComponent(comment.autorId)}`}>{comment.autorNome}</a>
+                  : <button className="feed-comment-profile-name" type="button" onClick={() => setInvestorProfileUserId(comment.autorId)}>{comment.autorNome}</button>}</strong><span>{relativeTime(comment.criadoEm)}</span></p><div>{comment.conteudo}</div></div>
+              </div>)}</div>}
               <form className="feed-comment-form" onSubmit={(event) => { event.preventDefault(); void comentar(post.id) }}><input maxLength={500} value={commentInputs[post.id] ?? ''} onChange={(event) => setCommentInputs((current) => ({ ...current, [post.id]: event.target.value }))} placeholder="Escreva um comentário…" aria-label="Novo comentário" /><button type="submit" disabled={!commentInputs[post.id]?.trim() || busyPost === post.id} aria-label="Publicar comentário"><Send size={17} /></button></form>
             </div>}
           </article>)}</div>}
@@ -364,6 +376,7 @@ export function FeedPage({ onBack, onOpenStartup }: FeedPageProps) {
         </>}
       </aside>
     </div>
+    {investorProfileUserId && <InvestorDetailsModal investorUserId={investorProfileUserId} onClose={() => setInvestorProfileUserId(null)} />}
   </main>
 }
 

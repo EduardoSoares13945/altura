@@ -23,5 +23,5 @@ export function beginNetworkActivity() {
 export function subscribeNetworkActivity(listener: Listener) {
   listeners.add(listener)
   listener(pendingRequests > 0)
-  return () => listeners.delete(listener)
+  return () => { listeners.delete(listener) }
 }

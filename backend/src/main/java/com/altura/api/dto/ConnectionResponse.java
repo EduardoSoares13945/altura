@@ -7,6 +7,7 @@ import java.util.UUID;
 public record ConnectionResponse(
         long id,
         String status,
+        UUID solicitanteUsuarioId,
         BigDecimal valorProposto,
         String mensagemInicial,
         Instant criadoEm,

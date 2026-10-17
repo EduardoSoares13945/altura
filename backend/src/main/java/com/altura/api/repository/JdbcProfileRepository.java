@@ -132,8 +132,9 @@ public class JdbcProfileRepository implements ProfileRepository {
         Long investorId = jdbc.queryForObject("""
                 insert into public.investidor (
                     usuario_id, nome, cpf, tipo, biografia, linkedin_url,
-                    localizacao, cidade, estado, latitude, longitude, imagem_perfil
-                ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    localizacao, cidade, estado, latitude, longitude, imagem_perfil,
+                    ticket_min, ticket_max
+                ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 on conflict (usuario_id) do update set
                     nome = excluded.nome,
                     cpf = excluded.cpf,
@@ -145,12 +146,14 @@ public class JdbcProfileRepository implements ProfileRepository {
                     estado = excluded.estado,
                     latitude = excluded.latitude,
                     longitude = excluded.longitude,
-                    imagem_perfil = excluded.imagem_perfil
+                    imagem_perfil = excluded.imagem_perfil,
+                    ticket_min = excluded.ticket_min,
+                    ticket_max = excluded.ticket_max
                 returning id
                 """, Long.class, userId, request.nome().trim(), request.cpf(), request.tipo().trim(),
                 request.biografia().trim(), blankToNull(request.linkedinUrl()), blankToNull(request.localizacao()),
                 request.cidade().trim(), request.estado(), request.latitude(), request.longitude(),
-                blankToNull(request.imagemPerfil()));
+                blankToNull(request.imagemPerfil()), request.ticketMin(), request.ticketMax());
 
         jdbc.update("delete from public.investidor_segmento where investidor_id = ?", investorId);
         request.segmentos().stream().distinct().forEach(segmentId -> jdbc.update("""
@@ -164,7 +167,8 @@ public class JdbcProfileRepository implements ProfileRepository {
     public Optional<InvestorProfileResponse> findInvestor(UUID userId) {
         Optional<InvestorRow> investor = first(jdbc.query("""
                 select id, nome, cpf, tipo, biografia, linkedin_url,
-                       localizacao, cidade, estado, latitude, longitude, imagem_perfil
+                       localizacao, cidade, estado, latitude, longitude, imagem_perfil,
+                       ticket_min, ticket_max
                 from public.investidor
                 where usuario_id = ?
                 """, (result, row) -> new InvestorRow(
@@ -173,11 +177,13 @@ public class JdbcProfileRepository implements ProfileRepository {
                 result.getString("linkedin_url"), result.getString("localizacao"),
                 result.getString("cidade"), result.getString("estado"),
                 nullableDouble(result, "latitude"), nullableDouble(result, "longitude"),
-                result.getString("imagem_perfil")), userId));
+                result.getString("imagem_perfil"), result.getBigDecimal("ticket_min"),
+                result.getBigDecimal("ticket_max")), userId));
         return investor.map(row -> new InvestorProfileResponse(
                 row.nome(), row.cpf(), row.tipo(), row.biografia(), investorSegments(row.id()),
                 row.linkedinUrl(), row.localizacao(), row.cidade(),
-                row.estado(), row.latitude(), row.longitude(), row.imagemPerfil()));
+                row.estado(), row.latitude(), row.longitude(), row.imagemPerfil(),
+                row.ticketMin(), row.ticketMax()));
     }
 
     @Override
@@ -211,6 +217,7 @@ public class JdbcProfileRepository implements ProfileRepository {
                 join public.startup s on s.id = c.startup_id
                 join public.segmento sg on sg.id = s.segmento_id
                 where c.status = 'aberta' and s.fase = 'Tração'
+                  and c.id = (select max(c2.id) from public.captacao c2 where c2.startup_id = c.startup_id)
                 order by case when exists (
                              select 1 from public.startup_metrica sm where sm.startup_id = s.id
                          ) then 0 else 1 end,
@@ -258,18 +265,18 @@ public class JdbcProfileRepository implements ProfileRepository {
         if (existing.isEmpty()) {
             jdbc.update("""
                     insert into public.captacao (
-                        startup_id, valor_alvo, valor_captado, percentual_equity_oferecido, status
-                    ) values (?, ?, ?, ?, ?::public.status_rodada)
+                        startup_id, valor_alvo, valor_captado, percentual_equity_oferecido, status, data_fim
+                    ) values (?, ?, ?, ?, ?::public.status_rodada, ?)
                     """, startupId, round.valorAlvo(), round.valorCaptado(),
-                    round.percentualEquityOferecido(), round.status());
+                    round.percentualEquityOferecido(), round.status(), round.dataFim());
         } else {
             jdbc.update("""
                     update public.captacao
                     set valor_alvo = ?, valor_captado = ?, percentual_equity_oferecido = ?,
-                        status = ?::public.status_rodada
+                        status = ?::public.status_rodada, data_fim = ?
                     where id = ?
                     """, round.valorAlvo(), round.valorCaptado(), round.percentualEquityOferecido(),
-                    round.status(), existing.get(0));
+                    round.status(), round.dataFim(), existing.get(0));
         }
     }
 
@@ -283,14 +290,15 @@ public class JdbcProfileRepository implements ProfileRepository {
 
     private Optional<StartupProfileResponse.RoundData> latestRound(long startupId) {
         return first(jdbc.query("""
-                select valor_alvo, valor_captado, percentual_equity_oferecido, status::text as status
+                select valor_alvo, valor_captado, percentual_equity_oferecido, status::text as status, data_fim
                 from public.captacao
                 where startup_id = ?
                 order by id desc
                 limit 1
                 """, (result, row) -> new StartupProfileResponse.RoundData(
                 result.getBigDecimal("valor_alvo"), result.getBigDecimal("valor_captado"),
-                result.getBigDecimal("percentual_equity_oferecido"), result.getString("status")), startupId));
+                result.getBigDecimal("percentual_equity_oferecido"), result.getString("status"),
+                result.getObject("data_fim", LocalDate.class)), startupId));
     }
 
     private Optional<StartupProfileResponse.TractionData> latestTraction(long startupId) {
@@ -345,7 +353,7 @@ public class JdbcProfileRepository implements ProfileRepository {
     private OpenRoundResponse toOpenRoundResponse(OpenRoundRow row) {
         return new OpenRoundResponse(
                 row.id(), row.startupId(), row.valorAlvo(), row.valorCaptado(), row.equity(),
-                row.status(), row.dataInicio(), new OpenRoundResponse.StartupData(
+                row.status(), row.dataInicio(), null, new OpenRoundResponse.StartupData(
                 row.startupId(), row.startupUserId(), row.nomeStartup(), row.fase(), row.segmentoId(), row.segmentoNome(),
                 row.descricao(), row.dataFundacao(), row.siteUrl(), row.cidade(), row.estado(),
                 row.videoPitchUrl(), row.linkedinUrl(), row.imagemPerfil(), startupSegmentNames(row.startupId()),
@@ -419,7 +427,7 @@ public class JdbcProfileRepository implements ProfileRepository {
     private record InvestorRow(
             long id, String nome, String cpf, String tipo, String biografia,
             String linkedinUrl, String localizacao, String cidade, String estado, Double latitude, Double longitude,
-            String imagemPerfil
+            String imagemPerfil, java.math.BigDecimal ticketMin, java.math.BigDecimal ticketMax
     ) {}
 
     private record OpenRoundRow(
