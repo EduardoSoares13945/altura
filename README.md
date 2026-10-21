@@ -32,7 +32,8 @@ A **ALTURA** conecta **startups com tração em busca de captação** a **invest
 
 O frontend é uma SPA em **React 19 + TypeScript**; o **Spring Boot 3** cuida de autenticação, validações e API, com **PostgreSQL (Neon)**.
 
-DEPLOY: https://altura-ruby.vercel.app/
+Link do Website: https://altura-ruby.vercel.app/
+Deploy do Front (Vercel) e Back (Render) mantido por Eduardo Soares
 
 ---
 
