@@ -141,7 +141,7 @@ Para adicionar uma tela:
 - **Frontend:** React 19, TypeScript, Vite 6, Tailwind CSS 4, Zod 4, lucide-react.
 - **Backend:** Java 17, Spring Boot 3, Spring Security, Spring JDBC, WebSocket, JWT, BCrypt.
 - **Banco:** PostgreSQL no Neon (acesso só pelo backend, via TLS).
-- **Schema:** `database/altura_schema.sql`. Em banco existente, execute as migrations em ordem. Para esta etapa, aplique `database/20261017_rounds_proposals_realtime.sql` no Neon antes de reiniciar a API.
+- **Schema:** `database/altura_schema.sql`. Em banco existente, execute todas as migrations ainda pendentes em ordem de nome antes de reiniciar a API.
 
 ---
 
@@ -204,6 +204,11 @@ npm run dev                         # terminal 2 (na raiz)
 ```
 
 Acesse `http://localhost:5173`. Scripts: `npm run dev`, `npm run build` (tsc + build) e `npm run preview`.
+
+## Deploy
+
+O frontend e a API possuem Dockerfiles independentes e configuração segura para
+produção. Consulte o passo a passo e o checklist em [`docs/DEPLOY.md`](docs/DEPLOY.md).
 
 ---
 

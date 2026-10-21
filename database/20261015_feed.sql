@@ -1,5 +1,5 @@
 -- modulo de feed
--- Execute uma vez no SQL Editor do Neon se nexo_schema.sql ja foi aplicado.
+-- Execute uma vez no SQL Editor do Neon se altura_schema.sql ja foi aplicado.
 
 begin;
 

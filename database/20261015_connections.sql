@@ -1,5 +1,5 @@
 -- conexoes, propostas e mensagens
--- Execute uma vez no SQL Editor do Neon depois de nexo_schema.sql.
+-- Execute uma vez no SQL Editor do Neon depois de altura_schema.sql.
 
 begin;
 

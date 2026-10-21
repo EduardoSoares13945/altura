@@ -1,6 +1,6 @@
 import { Brand } from './Brand'
 
-export function AppLoader({ message = 'Preparando sua experiência...' }: { message?: string }) {
+export function AppLoader({ message = 'Carregando os dados, isso pode levar um tempo.' }: { message?: string }) {
   return (
     <main id="conteudo" className="app-loader" role="status" aria-live="polite" aria-busy="true">
       <div className="app-loader-card">

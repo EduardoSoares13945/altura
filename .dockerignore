@@ -1,0 +1,17 @@
+.git
+.github
+.vscode
+.openai
+.env
+.env.*
+!.env.example
+node_modules
+dist
+backend/.env
+backend/.env.*
+!backend/.env.example
+backend/target
+backend/.m2repo
+.m2repo
+*.log
+

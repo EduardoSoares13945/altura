@@ -19,6 +19,7 @@ import com.altura.api.repository.FeedRepository;
 import com.altura.api.repository.ProfileRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Instant;
 import java.util.List;
@@ -27,8 +28,6 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.mock;
-
 class FeedServiceTest {
     private final UUID userId = UUID.randomUUID();
     private FakeFeedRepository feedRepository;
@@ -38,8 +37,8 @@ class FeedServiceTest {
     void setUp() {
         feedRepository = new FakeFeedRepository();
         service = new FeedService(feedRepository, new MemberAuthRepository(userId),
-                new CompleteProfileRepository(), mock(FeedImageStorage.class),
-                mock(NotificationService.class));
+                new CompleteProfileRepository(), new NoopFeedImageStorage(),
+                new NoopNotificationService());
     }
 
     @Test
@@ -73,7 +72,7 @@ class FeedServiceTest {
     void preventsInvestorFromPublishing() {
         service = new FeedService(feedRepository,
                 new MemberAuthRepository(userId, "investidor"), new CompleteProfileRepository(),
-                mock(FeedImageStorage.class), mock(NotificationService.class));
+                new NoopFeedImageStorage(), new NoopNotificationService());
         CreatePostRequest request = new CreatePostRequest(
                 "Uma tese que não deve ser publicada.", "insight", null, null, null);
 
@@ -82,6 +81,20 @@ class FeedServiceTest {
                     assertThat(exception.status().value()).isEqualTo(403);
                     assertThat(exception.getMessage()).contains("Somente startups");
                 });
+    }
+
+    private static final class NoopFeedImageStorage implements FeedImageStorage {
+        @Override public String store(UUID ownerId, MultipartFile file) { return null; }
+        @Override public String signedUrl(String key) { return null; }
+        @Override public void deleteQuietly(String key) {}
+    }
+
+    private static final class NoopNotificationService extends NotificationService {
+        private NoopNotificationService() { super(null, null, null); }
+
+        @Override
+        public void notify(UUID recipientId, UUID actorId, String type, long referenceId,
+                           String title, String message, String destination) {}
     }
 
     private static final class FakeFeedRepository implements FeedRepository {

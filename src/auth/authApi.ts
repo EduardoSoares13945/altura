@@ -1,4 +1,5 @@
 import type { AuthSession, AuthUser, TipoUsuario } from './AuthContext'
+import { beginNetworkActivity } from '../navigation/activity'
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? '/api'
 const STORAGE_KEY = 'altura.auth.session'
@@ -149,18 +150,23 @@ function toSession(response: AuthTokenResponse): AuthSession {
 }
 
 async function authFetch(path: string, init: RequestInit): Promise<AuthTokenResponse> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...init,
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...init.headers },
-  })
-  if (response.ok) return response.json() as Promise<AuthTokenResponse>
-  let payload: ErrorPayload = {}
+  const finishActivity = beginNetworkActivity()
   try {
-    payload = await response.json() as ErrorPayload
-  } catch {
-    // Usa a mensagem segura abaixo.
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+      ...init,
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...init.headers },
+    })
+    if (response.ok) return await response.json() as AuthTokenResponse
+    let payload: ErrorPayload = {}
+    try {
+      payload = await response.json() as ErrorPayload
+    } catch {
+      // Usa a mensagem segura abaixo.
+    }
+    throw new Error(payload.message ?? 'Não foi possível concluir. Tente novamente em instantes.')
+  } finally {
+    finishActivity()
   }
-  throw new Error(payload.message ?? 'Não foi possível concluir. Tente novamente em instantes.')
 }
 
 function authErrorMessage(error: unknown) {

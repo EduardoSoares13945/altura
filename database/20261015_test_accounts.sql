@@ -1,5 +1,5 @@
 -- contas completas para testes locais/homologacao
--- Execute no SQL Editor do Neon depois de aplicar nexo_schema.sql.
+-- Execute no SQL Editor do Neon depois de aplicar altura_schema.sql.
 --
 -- Startup:   startup.teste@altura.com
 -- Investidor: investidor.teste@altura.com

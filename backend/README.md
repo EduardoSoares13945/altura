@@ -6,7 +6,7 @@ Backend Spring Boot 3 da Altura, com autenticação própria e persistência Pos
 
 - Java 17+
 - Maven 3.9+
-- PostgreSQL com o schema de `../database/nexo_schema.sql`
+- PostgreSQL com o schema de `../database/altura_schema.sql`
 
 ## Configuração
 
@@ -108,7 +108,7 @@ Rotas autenticadas:
 
 Se o schema principal já foi aplicado antes da criação do feed, execute uma vez
 `../database/20261015_feed.sql` no SQL Editor do Neon. Novos bancos podem usar
-somente `../database/nexo_schema.sql`, que já contém o módulo.
+somente `../database/altura_schema.sql`, que já contém o módulo.
 
 Para habilitar imagem e vídeo em um banco existente, execute também
 `../database/20261015_feed_media.sql`. Imagens usam um bucket privado do Neon Object

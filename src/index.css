@@ -700,7 +700,7 @@ html[data-theme='dark'] .landing-shell .footer-bottom { border-color: #25253A; }
   animation: route-loader-enter 130ms ease-out;
 }
 
-.route-loader > div { display: grid; justify-items: center; gap: 11px; color: #F7F7FF; font-size: .84rem; font-weight: 700; }
+.route-loader > div { display: grid; justify-items: center; gap: 13px; max-width: 360px; padding: 24px; color: #F7F7FF; font-size: .9rem; font-weight: 700; line-height: 1.5; text-align: center; }
 .route-loader svg { color: #9D96FF; animation: spin 780ms linear infinite; }
 
 @keyframes route-loader-enter { from { opacity: 0; } to { opacity: 1; } }
